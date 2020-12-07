@@ -4,3 +4,5 @@
 # And put the UBI Center homepage at the bottom.
 - url: https://ubicenter.org
   title: UBI Center home
+# Add working UK flat tax UBI notebook
+- file: flat-tax
