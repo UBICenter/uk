@@ -1,5 +1,5 @@
 # Book settings
-title: reponame
+title: UK
 author: UBI Center
 logo: _static/ubi_center_logo_wide_blue.png
 
@@ -8,12 +8,12 @@ html:
   use_repository_button     : true
   use_issues_button         : true
   google_analytics_id       : "UA-138885251-1"
-  baseurl                   : "https://reponame.ubicenter.org"
+  baseurl                   : "https://uk.ubicenter.org"
   home_page_in_navbar       : true
   favicon                   : _static/favicon.png
 
 repository:
-  url: https://github.com/UBICenter/reponame
+  url: https://github.com/UBICenter/uk
   path_to_book: jb
 
 # This enables plotly's JavaScript

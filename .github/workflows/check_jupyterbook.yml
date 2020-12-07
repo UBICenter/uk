@@ -2,7 +2,7 @@ name: Test that Jupyter Book builds
 on: [push, pull_request]
 jobs:
   build-and-deploy:
-    if: github.repository == 'UBICenter/reponame'
+    if: github.repository == 'UBICenter/uk'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -13,7 +13,7 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: reponame
+          activate-environment: uk
           environment-file: environment.yml
           python-version: 3.9
           auto-activate-base: false

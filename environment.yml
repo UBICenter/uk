@@ -1,4 +1,4 @@
-name: reponame
+name: uk
 dependencies:
 - python
 - plotly
