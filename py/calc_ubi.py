@@ -77,6 +77,7 @@ def ubi_reform(senior, adult, child, dis_1, dis_2, dis_3, geo):
     Returns:
         DataFrame: Person-level DataFrame with columns mapped and yearlyised
     """
+
     class income_tax(Variable):
         value_type = float
         entity = Person
