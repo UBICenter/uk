@@ -6,24 +6,28 @@ from openfisca_uk.tools.simulation import Simulation
 DATA_DIR = "~/frs"
 baseline = Simulation(data_dir=DATA_DIR)
 
+
 def calc2df(sim, cols):
     d = {}
     for i in cols:
         d[i] = sim.calc(i, map_to="household")
     return pd.DataFrame(d)
 
+
 baseline = Simulation(data_dir=DATA_DIR)
 
 # Predefine a DataFrame for speed.
-BASELINE_COLS = ["is_SP_age",
-                 "is_child",
-                 "is_disabled",
-                 "is_enhanced_disabled",
-                 "is_severely_disabled",
-                 "region",
-                 "household_weight",
-                 "people_in_household",
-                 "household_net_income"]
+BASELINE_COLS = [
+    "is_SP_age",
+    "is_child",
+    "is_disabled",
+    "is_enhanced_disabled",
+    "is_severely_disabled",
+    "region",
+    "household_weight",
+    "people_in_household",
+    "household_net_income",
+]
 
 baseline_df = calc2df(baseline, BASELINE_COLS)
 
@@ -43,11 +47,13 @@ def loss_metrics(
     :param population: Variable indicating the subpopulation to calculate
         losses for. Defaults to people_in_household, i.e. all people.
     :type population: str, optional
-    :return: Series with three elements:
-        1) loser_share: Share of the population who come out behind.
-        2) losses: Total losses among losers in pounds.
-        3) mean_pct_loss: Average percent loss across the population
+    :return: Series with four elements:
+        loser_share: Share of the population who come out behind.
+        losses: Total losses among losers in pounds.
+        mean_pct_loss: Average percent loss across the population
             (including zeroes for people who don't experience losses).
+        mean_pct_loss_pwd2: Average percent loss across the population, with
+            double weight given to people with disabilities.
     :rtype: pd.Series
     """
     change = (
@@ -61,20 +67,25 @@ def loss_metrics(
         weight_var = baseline_df.people_in_household
     weight = baseline_df.household_weight * weight_var
     # Calculate loser share.
-    total = np.sum(weight)
+    total_pop = np.sum(weight)
     losers = np.sum(weight * (loss > 0))
-    loser_share = losers / total
+    loser_share = losers / total_pop
     # Calculate total losses in pounds.
     losses = np.sum(weight * loss)
     # Calculate average percent loss (including zero for non-losers).
     pct_loss = loss / baseline_df.household_net_income
     valid_pct_loss = np.isfinite(pct_loss)
-    # Not sure this is working:
     total_pct_loss = np.sum(weight[valid_pct_loss] * pct_loss[valid_pct_loss])
-    mean_pct_loss = total_pct_loss / total
-    # Not sure why this isn't working?
-    # mean_pct_loss = np.mean(weight * pct_loss, where=~pct_loss.isnull())
+    mean_pct_loss = total_pct_loss / total_pop
+    # Calculate average percent loss with double weight for PWD.
+    pwd2_weight = weight * np.where(baseline_df.is_disabled, 2, 1)
+    total_pct_loss_pwd2 = np.sum(
+        pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss]
+    )
+    total_pop_pwd2 = pwd2_weight.sum()  # Denominator.
+    mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
+    # Return Series of all metrics.
     return pd.Series(
-        [loser_share, losses, mean_pct_loss],
-        index=["loser_share", "losses", "mean_pct_loss"],
+        [loser_share, losses, mean_pct_loss, mean_pct_loss_pwd2],
+        index=["loser_share", "losses", "mean_pct_loss", "mean_pct_loss_pwd2"],
     )
