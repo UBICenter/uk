@@ -3,31 +3,13 @@ import pandas as pd
 from openfisca_uk.tools.simulation import Simulation
 import microdf as mdf
 
+# File in repo.
+import calc_ubi
+
 
 DATA_DIR = "~/frs"
 
 baseline_sim = Simulation(data_dir=DATA_DIR)
-
-
-def calc2df(
-    sim: Simulation, cols: list, map_to: str = "person"
-) -> pd.DataFrame:
-    """Make a DataFrame from an openfisca-uk Simulation.
-
-    :param sim: Simulation object to extract from.
-    :type sim: Simulation
-    :param cols: List of simulation attributes.
-    :type cols: list
-    :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
-        Defaults to 'person'.
-    :type map_to: str, optional
-    :return: DataFrame with each attribute of sim as a column.
-    :rtype: pd.DataFrame
-    """
-    d = {}
-    for i in cols:
-        d[i] = sim.calc(i, map_to=map_to)
-    return pd.DataFrame(d)
 
 
 # Predefine a DataFrame for speed.

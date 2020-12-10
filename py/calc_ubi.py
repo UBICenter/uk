@@ -16,19 +16,24 @@ from openfisca_core.model_api import *
 from openfisca_uk.entities import *
 
 
-def calc2df(sim, cols):
-    """Calculate column variable values.
+def calc2df(
+    sim: Simulation, cols: list, map_to: str = "person"
+) -> pd.DataFrame:
+    """Make a DataFrame from an openfisca-uk Simulation.
 
-    Args:
-        sim (PopulationSim): OpenFisca-UK PopulationSim
-        cols (list): List of variables to calculate
-
-    Returns:
-        DataFrame: DataFrame of variables mapped to person-level.
+    :param sim: Simulation object to extract from.
+    :type sim: Simulation
+    :param cols: List of simulation attributes.
+    :type cols: list
+    :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
+        Defaults to 'person'.
+    :type map_to: str, optional
+    :return: DataFrame with each attribute of sim as a column.
+    :rtype: pd.DataFrame
     """
     d = {}
     for i in cols:
-        d[i] = sim.calc(i, map_to="person")
+        d[i] = sim.calc(i, map_to=map_to)
     return pd.DataFrame(d)
 
 
