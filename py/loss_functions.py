@@ -5,17 +5,25 @@ import microdf as mdf
 
 
 DATA_DIR = "~/frs"
-baseline = Simulation(data_dir=DATA_DIR)
+
+baseline_sim = Simulation(data_dir=DATA_DIR)
 
 
-def calc2df(sim, cols):
+def calc2df(sim: Simulation, cols: list) -> pd.DataFrame:
+    """Make a DataFrame from an openfisca-uk Simulation.
+
+    :param sim: Simulation object to extract from.
+    :type sim: Simulation
+    :param cols: List of simulation attributes.
+    :type cols: list
+    :return: DataFrame with each attribute of sim as a column.
+    :rtype: pd.DataFrame
+    """
     d = {}
     for i in cols:
         d[i] = sim.calc(i, map_to="household")
     return pd.DataFrame(d)
 
-
-baseline = Simulation(data_dir=DATA_DIR)
 
 # Predefine a DataFrame for speed.
 BASELINE_COLS = [
@@ -30,7 +38,7 @@ BASELINE_COLS = [
     "household_net_income",
 ]
 
-baseline_df = calc2df(baseline, BASELINE_COLS)
+baseline_df = calc2df(baseline_sim, BASELINE_COLS)
 
 
 def loss_metrics(
@@ -60,6 +68,9 @@ def loss_metrics(
     :rtype: pd.Series
     """
     reform_hh_net_income = reform_sim.calc("household_net_income")
+    # If a different baseline is provided, make baseline_df.
+    if baseline_sim is not None:
+        baseline_df = calc2df(baseline_sim, BASELINE_COLS)
     change = reform_hh_net_income - baseline_df.household_net_income
     loss = np.maximum(-change, 0)
     if population:
