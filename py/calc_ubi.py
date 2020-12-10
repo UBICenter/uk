@@ -166,7 +166,7 @@ REGIONS = np.array(
 )
 
 
-def get_data():
+def get_data(path):
     """Generate key datasets for UBI reforms.
 
     Returns:
@@ -174,7 +174,12 @@ def get_data():
         DataFrame: UBI tax reform DataFrame with core variables.
         float: Yearly revenue raised by the UBI tax reform.
     """
-    person, benunit, household = frs.load()
+    if path is not None:
+        person = pd.read_csv(path + "/person.csv")
+        benunit = pd.read_csv(path + "/benunit.csv")
+        household = pd.read_csv(path + "/household.csv")
+    else:
+        person, benunit, household = frs.load()
     baseline = PopulationSim(frs_data=(person, benunit, household))
     baseline_df = calc2df(baseline, BASELINE_COLS)
     FRS_DATA = (person, benunit, household)
