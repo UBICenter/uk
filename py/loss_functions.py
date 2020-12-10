@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import microdf as mdf
+from openfisca_uk import CountryTaxBenefitSystem
 
 # File in repo.
 from calc_ubi import get_data, set_ubi
@@ -57,13 +58,25 @@ def loss_metrics(x: list) -> pd.Series:
     total_pop_pwd2 = pwd2_weight.sum()  # Denominator.
     mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
     # Poverty gap.
+    # Extract current poverty thresholds.
+    pov_params = CountryTaxBenefitSystem().parameters.poverty
+    bhc_pov_threshold = pov_params.absolute_poverty_bhc.get_at_instant(2020)
+    ahc_pov_threshold = pov_params.absolute_poverty_ahc.get_at_instant(2020)
+    # Calculate poverty gaps.
+    # TODO: Un-equivalize this to make it a correct poverty gap figure.
     bhc_pov_gaps = np.maximum(
-        295 - reform_df.household_net_income / reform_df.household_equivalisation_bhc, 0
+        bhc_pov_threshold
+        - reform_df.household_net_income
+        / reform_df.household_equivalisation_bhc,
+        0,
     )
     ahc_pov_gaps = np.maximum(
-        253 - reform_df.household_net_income_ahc / reform_df.household_equivalisation_ahc, 0
+        ahc_pov_threshold
+        - reform_df.household_net_income_ahc
+        / reform_df.household_equivalisation_ahc,
+        0,
     )
-    # TODO: Make this work with a filtered group.
+    # Aggregate poverty gaps by household.
     poverty_gap_bhc = np.sum(bhc_pov_gaps * baseline_df.household_weight)
     poverty_gap_ahc = np.sum(ahc_pov_gaps * baseline_df.household_weight)
     # Gini of income per person.
