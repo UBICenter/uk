@@ -48,7 +48,10 @@ BASELINE_COLS = [
     "region",
     "household_weight",
     "household_net_income",
-    "people_in_household"
+    "household_net_income_ahc",
+    "people_in_household",
+    "household_equivalisation_bhc",
+    "household_equivalisation_ahc"
 ]
 
 CORE_BENEFITS = [
@@ -236,4 +239,5 @@ def set_ubi(
     reform_df = base_df
     reform_df["basic_income"] = basic_income
     reform_df["household_net_income"] += basic_income
+    reform_df["household_net_income_ahc"] += basic_income
     return reform_df
