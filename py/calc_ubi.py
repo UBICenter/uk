@@ -2,7 +2,8 @@
 Example usage:
 
 baseline_df, base_reform_df, budget = get_data()
-x = set_ubi(base_reform_df, budget, 0, 0, 0, 0, 0, np.zeros((12)), verbose=True)
+ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, 0, 0, np.zeros((12)), verbose=True)
+
 """
 
 from openfisca_uk import PopulationSim
@@ -208,10 +209,8 @@ def set_ubi(
         base_df["is_SP_age"] * senior
         + base_df["is_child"] * child
         + base_df["is_standard_disabled"] * dis_1
-        + base_df["is_enhanced_disabled"]
-        + dis_2
-        + base_df["is_severely_disabled"]
-        + dis_3
+        + base_df["is_enhanced_disabled"] * dis_2
+        + base_df["is_severely_disabled"] * dis_3
     ) * 52
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
