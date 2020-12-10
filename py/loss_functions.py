@@ -6,7 +6,7 @@ import microdf as mdf
 from calc_ubi import get_data, set_ubi
 
 
-base_df, reform_df, budget = get_data("~/frs")
+baseline_df, reform_base_df, budget = get_data()
 
 
 def loss_metrics(x: list) -> pd.Series:
@@ -32,12 +32,12 @@ def loss_metrics(x: list) -> pd.Series:
     senior, child, dis_1, dis_2, dis_3 = x[:5]
     regions = np.array(x[5:])
     reform_df = set_ubi(
-        base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
+        reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
     )
     # Calculate loss-related loss metrics.
-    change = reform_df.household_net_income - base_df.household_net_income
+    change = reform_df.household_net_income - baseline_df.household_net_income
     loss = np.maximum(-change, 0)
-    weight = base_df.household_weight * base_df.people_in_household
+    weight = baseline_df.household_weight * baseline_df.people_in_household
     # Calculate loser share.
     total_pop = np.sum(weight)
     losers = np.sum(weight * (loss > 0))
@@ -45,12 +45,12 @@ def loss_metrics(x: list) -> pd.Series:
     # Calculate total losses in pounds.
     losses = np.sum(weight * loss)
     # Calculate average percent loss (including zero for non-losers).
-    pct_loss = loss / base_df.household_net_income
+    pct_loss = loss / baseline_df.household_net_income
     valid_pct_loss = np.isfinite(pct_loss)
     total_pct_loss = np.sum(weight[valid_pct_loss] * pct_loss[valid_pct_loss])
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.
-    pwd2_weight = weight * np.where(base_df.is_disabled, 2, 1)
+    pwd2_weight = weight * np.where(baseline_df.is_disabled, 2, 1)
     total_pct_loss_pwd2 = np.sum(
         pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss]
     )
@@ -68,7 +68,7 @@ def loss_metrics(x: list) -> pd.Series:
     # poverty_gap_ahc = np.sum(ahc_pov_gaps * base_df.household_weight)
     # Gini of income per person.
     reform_hh_net_income_pp = (
-        reform_df.household_net_income / base_df.people_in_household
+        reform_df.household_net_income / baseline_df.people_in_household
     )
     # mdf.gini requires a dataframe.
     reform_df = pd.DataFrame(
