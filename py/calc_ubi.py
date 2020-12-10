@@ -47,9 +47,7 @@ BASELINE_COLS = [
     "is_severely_disabled",
     "region",
     "household_weight",
-    "net_income",
-    "absolute_poverty_bhc",
-    "absolute_poverty_ahc",
+    "household_net_income",
 ]
 
 CORE_BENEFITS = [
@@ -202,7 +200,7 @@ def set_ubi(
     """Calculate budget-neutral UBI amounts per person.
 
     Args:
-        base_df (DataFrame): UBI tax reform person-level DataFrame
+        base_df (DataFrame): UBI tax reform household-level DataFrame
         budget (float): Total budget for UBI spending
         senior (float): Pensioner UBI amount per week
         child (float): Child UBI amount per week
@@ -213,7 +211,7 @@ def set_ubi(
         verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
 
     Returns:
-        DataFrame: Reform person-level DataFrame
+        DataFrame: Reform household-level DataFrame
     """
     basic_income = (
         base_df["is_SP_age"] * senior
