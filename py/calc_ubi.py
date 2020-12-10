@@ -6,7 +6,7 @@ ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, 0, 0, np.zeros((12)), verbose=
 
 """
 
-from openfisca_uk import PopulationSim
+from openfisca_uk.tools.simulation import PopulationSim
 import frs
 import pandas as pd
 import numpy as np
@@ -16,19 +16,24 @@ from openfisca_core.model_api import *
 from openfisca_uk.entities import *
 
 
-def calc2df(sim, cols):
-    """Calculate column variable values.
+def calc2df(
+    sim: PopulationSim, cols: list, map_to: str = "person"
+) -> pd.DataFrame:
+    """Make a DataFrame from an openfisca-uk PopulationSim.
 
-    Args:
-        sim (PopulationSim): OpenFisca-UK PopulationSim
-        cols (list): List of variables to calculate
-
-    Returns:
-        DataFrame: DataFrame of variables mapped to person-level.
+    :param sim: PopulationSim object to extract from.
+    :type sim: PopulationSim
+    :param cols: List of simulation attributes.
+    :type cols: list
+    :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
+        Defaults to 'person'.
+    :type map_to: str, optional
+    :return: DataFrame with each attribute of sim as a column.
+    :rtype: pd.DataFrame
     """
     d = {}
     for i in cols:
-        d[i] = sim.calc(i, map_to="household")
+        d[i] = sim.calc(i, map_to=map_to)
     return pd.DataFrame(d)
 
 
@@ -37,12 +42,16 @@ BASELINE_COLS = [
     "is_SP_age",
     "is_child",
     "is_WA_adult",
-    "is_standard_disabled",
+    "is_disabled",
     "is_enhanced_disabled",
     "is_severely_disabled",
     "region",
     "household_weight",
     "household_net_income",
+    "household_net_income_ahc",
+    "people_in_household",
+    "household_equivalisation_bhc",
+    "household_equivalisation_ahc"
 ]
 
 CORE_BENEFITS = [
@@ -159,7 +168,7 @@ REGIONS = np.array(
 )
 
 
-def get_data():
+def get_data(path=None):
     """Generate key datasets for UBI reforms.
 
     Returns:
@@ -167,7 +176,12 @@ def get_data():
         DataFrame: UBI tax reform DataFrame with core variables.
         float: Yearly revenue raised by the UBI tax reform.
     """
-    person, benunit, household = frs.load()
+    if path is not None:
+        person = pd.read_csv(path + "/person.csv")
+        benunit = pd.read_csv(path + "/benunit.csv")
+        household = pd.read_csv(path + "/household.csv")
+    else:
+        person, benunit, household = frs.load()
     baseline = PopulationSim(frs_data=(person, benunit, household))
     baseline_df = calc2df(baseline, BASELINE_COLS)
     FRS_DATA = (person, benunit, household)
@@ -190,7 +204,7 @@ def set_ubi(
     """Calculate budget-neutral UBI amounts per person.
 
     Args:
-        base_df (DataFrame): UBI tax reform person-level DataFrame
+        base_df (DataFrame): UBI tax reform household-level DataFrame
         budget (float): Total budget for UBI spending
         senior (float): Pensioner UBI amount per week
         child (float): Child UBI amount per week
@@ -201,12 +215,12 @@ def set_ubi(
         verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
 
     Returns:
-        DataFrame: Reform person-level DataFrame
+        DataFrame: Reform household-level DataFrame
     """
     basic_income = (
         base_df["is_SP_age"] * senior
         + base_df["is_child"] * child
-        + base_df["is_standard_disabled"] * dis_1
+        + base_df["is_disabled"] * dis_1
         + base_df["is_enhanced_disabled"] * dis_2
         + base_df["is_severely_disabled"] * dis_3
     ) * 52
@@ -225,4 +239,5 @@ def set_ubi(
     reform_df = base_df
     reform_df["basic_income"] = basic_income
     reform_df["household_net_income"] += basic_income
+    reform_df["household_net_income_ahc"] += basic_income
     return reform_df
