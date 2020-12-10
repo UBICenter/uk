@@ -113,8 +113,8 @@ def loss_metrics(
         baseline_df.absolute_poverty_ahc - reform_hh_net_income, 0
     )
     # TODO: Make this work with a filtered group.
-    bhc_pov_gap = np.sum(bhc_pov_gaps * baseline_df.household_weight)
-    ahc_pov_gap = np.sum(ahc_pov_gaps * baseline_df.household_weight)
+    poverty_gap_bhc = np.sum(bhc_pov_gaps * baseline_df.household_weight)
+    poverty_gap_ahc = np.sum(ahc_pov_gaps * baseline_df.household_weight)
     # Gini of income per person.
     reform_hh_net_income_pp = (
         reform_hh_net_income / baseline_df.people_in_household
