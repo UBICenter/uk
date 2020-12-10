@@ -20,7 +20,7 @@ def calc2df(
     :type cols: list
     :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
         Defaults to 'person'.
-    :type map_to: str
+    :type map_to: str, optional
     :return: DataFrame with each attribute of sim as a column.
     :rtype: pd.DataFrame
     """
