@@ -28,13 +28,11 @@ def calc2df(sim, cols):
     """
     d = {}
     for i in cols:
-        d[i] = sim.calc(i, map_to="person")
+        d[i] = sim.calc(i, map_to="household")
     return pd.DataFrame(d)
 
 
 BASELINE_COLS = [
-    "person_id",
-    "benunit_id",
     "household_id",
     "is_SP_age",
     "is_child",
@@ -44,7 +42,7 @@ BASELINE_COLS = [
     "is_severely_disabled",
     "region",
     "household_weight",
-    "net_income",
+    "household_net_income",
 ]
 
 CORE_BENEFITS = [
@@ -226,5 +224,5 @@ def set_ubi(
     basic_income += base_df["is_WA_adult"] * adult_amount
     reform_df = base_df
     reform_df["basic_income"] = basic_income
-    reform_df["net_income"] += basic_income
+    reform_df["household_net_income"] += basic_income
     return reform_df
