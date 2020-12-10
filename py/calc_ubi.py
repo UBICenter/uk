@@ -42,7 +42,7 @@ BASELINE_COLS = [
     "is_SP_age",
     "is_child",
     "is_WA_adult",
-    "is_standard_disabled",
+    "is_disabled",
     "is_enhanced_disabled",
     "is_severely_disabled",
     "region",
@@ -165,7 +165,7 @@ REGIONS = np.array(
 )
 
 
-def get_data(path):
+def get_data(path=None):
     """Generate key datasets for UBI reforms.
 
     Returns:
@@ -217,7 +217,7 @@ def set_ubi(
     basic_income = (
         base_df["is_SP_age"] * senior
         + base_df["is_child"] * child
-        + base_df["is_standard_disabled"] * dis_1
+        + base_df["is_disabled"] * dis_1
         + base_df["is_enhanced_disabled"] * dis_2
         + base_df["is_severely_disabled"] * dis_3
     ) * 52
