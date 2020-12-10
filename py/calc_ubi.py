@@ -38,8 +38,6 @@ def calc2df(
 
 
 BASELINE_COLS = [
-    "person_id",
-    "benunit_id",
     "household_id",
     "is_SP_age",
     "is_child",
@@ -233,5 +231,5 @@ def set_ubi(
     basic_income += base_df["is_WA_adult"] * adult_amount
     reform_df = base_df
     reform_df["basic_income"] = basic_income
-    reform_df["net_income"] += basic_income
+    reform_df["household_net_income"] += basic_income
     return reform_df

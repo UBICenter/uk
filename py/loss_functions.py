@@ -6,21 +6,15 @@ import microdf as mdf
 import calc_ubi
 
 
-def loss_metrics(
-    reform_sim: Simulation,
-    baseline_sim: Simulation = None,
-    population: str = None,
-) -> pd.Series:
+base, reform, budget = get_data("~/frs")
+
+
+def loss_metrics(x: list) -> pd.Series:
     """Calculate each potential loss metric.
 
-    :param reform_sim: Reform simulation object.
-    :type reform_sim: Simulation
-    :param baseline_sim: Baseline simulation object. Defaults to the baseline
-        previously defined and extracted into baseline_df.
-    :type baseline_sim: Simulation, optional
-    :param population: Variable indicating the subpopulation to calculate
-        losses for. Defaults to people_in_household, i.e. all people.
-    :type population: str, optional
+    :param x: List of optimization elements:
+        [senior, child, dis_1, dis_2, dis_3, region1, region2, ..., region12]
+    :type x: list
     :return: Series with five elements:
         loser_share: Share of the population who come out behind.
         losses: Total losses among losers in pounds.
@@ -34,10 +28,9 @@ def loss_metrics(
             scenario, weighted by person weight at the household level.
     :rtype: pd.Series
     """
-    reform_hh_net_income = reform_sim.calc("household_net_income")
-    # If a different baseline is provided, make baseline_df.
-    if baseline_sim is not None:
-        baseline_df = calc2df(baseline_sim, BASELINE_COLS)
+    senior, child, dis_1, dis_2, dis_3 = x[:5]
+    regions = np.array(x[5:])
+    
     change = reform_hh_net_income - baseline_df.household_net_income
     loss = np.maximum(-change, 0)
     if population:
