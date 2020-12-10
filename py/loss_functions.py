@@ -9,19 +9,24 @@ DATA_DIR = "~/frs"
 baseline_sim = Simulation(data_dir=DATA_DIR)
 
 
-def calc2df(sim: Simulation, cols: list) -> pd.DataFrame:
+def calc2df(
+    sim: Simulation, cols: list, map_to: str = "person"
+) -> pd.DataFrame:
     """Make a DataFrame from an openfisca-uk Simulation.
 
     :param sim: Simulation object to extract from.
     :type sim: Simulation
     :param cols: List of simulation attributes.
     :type cols: list
+    :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
+        Defaults to 'person'.
+    :type map_to: str
     :return: DataFrame with each attribute of sim as a column.
     :rtype: pd.DataFrame
     """
     d = {}
     for i in cols:
-        d[i] = sim.calc(i, map_to="household")
+        d[i] = sim.calc(i, map_to=map_to)
     return pd.DataFrame(d)
 
 
@@ -38,7 +43,7 @@ BASELINE_COLS = [
     "household_net_income",
 ]
 
-baseline_df = calc2df(baseline_sim, BASELINE_COLS)
+baseline_df = calc2df(baseline_sim, BASELINE_COLS, map_to="household")
 
 
 def loss_metrics(
