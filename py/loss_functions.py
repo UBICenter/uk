@@ -1,33 +1,9 @@
 import numpy as np
 import pandas as pd
-from openfisca_uk.tools.simulation import Simulation
 import microdf as mdf
 
 # File in repo.
 import calc_ubi
-
-
-DATA_DIR = "~/frs"
-
-baseline_sim = Simulation(data_dir=DATA_DIR)
-
-
-# Predefine a DataFrame for speed.
-BASELINE_COLS = [
-    "is_SP_age",
-    "is_child",
-    "is_disabled",
-    "is_enhanced_disabled",
-    "is_severely_disabled",
-    "region",
-    "household_weight",
-    "people_in_household",
-    "household_net_income",
-    "absolute_poverty_bhc",
-    "absolute_poverty_ahc",
-]
-
-baseline_df = calc2df(baseline_sim, BASELINE_COLS, map_to="household")
 
 
 def loss_metrics(

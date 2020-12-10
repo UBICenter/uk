@@ -50,6 +50,8 @@ BASELINE_COLS = [
     "region",
     "household_weight",
     "net_income",
+    "absolute_poverty_bhc",
+    "absolute_poverty_ahc",
 ]
 
 CORE_BENEFITS = [
