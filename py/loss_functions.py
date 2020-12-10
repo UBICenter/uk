@@ -35,7 +35,8 @@ def loss_metrics(x: list) -> pd.Series:
         base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
     )
     # Calculate loss-related loss metrics.
-    change = reform_df.household_net_income - baseline_df.household_net_income
+    change = reform_df.household_net_income - base_df.household_net_income
+    loss = np.maximum(-change, 0)
     weight = base_df.household_weight * base_df.people_in_household
     # Calculate loser share.
     total_pop = np.sum(weight)

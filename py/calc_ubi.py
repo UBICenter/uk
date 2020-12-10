@@ -6,7 +6,7 @@ ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, 0, 0, np.zeros((12)), verbose=
 
 """
 
-from openfisca_uk import PopulationSim
+from openfisca_uk.tools.simulation import PopulationSim
 import frs
 import pandas as pd
 import numpy as np
@@ -17,12 +17,12 @@ from openfisca_uk.entities import *
 
 
 def calc2df(
-    sim: Simulation, cols: list, map_to: str = "person"
+    sim: PopulationSim, cols: list, map_to: str = "person"
 ) -> pd.DataFrame:
-    """Make a DataFrame from an openfisca-uk Simulation.
+    """Make a DataFrame from an openfisca-uk PopulationSim.
 
-    :param sim: Simulation object to extract from.
-    :type sim: Simulation
+    :param sim: PopulationSim object to extract from.
+    :type sim: PopulationSim
     :param cols: List of simulation attributes.
     :type cols: list
     :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
@@ -48,6 +48,7 @@ BASELINE_COLS = [
     "region",
     "household_weight",
     "household_net_income",
+    "people_in_household"
 ]
 
 CORE_BENEFITS = [
