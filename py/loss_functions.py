@@ -41,6 +41,8 @@ BASELINE_COLS = [
     "household_weight",
     "people_in_household",
     "household_net_income",
+    "absolute_poverty_bhc",
+    "absolute_poverty_ahc",
 ]
 
 baseline_df = calc2df(baseline_sim, BASELINE_COLS, map_to="household")
@@ -68,8 +70,10 @@ def loss_metrics(
             (including zeroes for people who don't experience losses).
         mean_pct_loss_pwd2: Average percent loss across the population, with
             double weight given to people with disabilities.
-        reform_gini: Gini index of per-person household net income in the
-            reform scenario, weighted by person weight at the household level.
+        poverty_gap_bhc: Poverty gap before housing costs.
+        poverty_gap_ahc: Poverty gap after housing costs.
+        gini: Gini index of per-person household net income in the reform
+            scenario, weighted by person weight at the household level.
     :rtype: pd.Series
     """
     reform_hh_net_income = reform_sim.calc("household_net_income")
@@ -101,21 +105,34 @@ def loss_metrics(
     )
     total_pop_pwd2 = pwd2_weight.sum()  # Denominator.
     mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
+    # Poverty gap.
+    bhc_pov_gaps = np.maximum(
+        baseline_df.absolute_poverty_bhc - reform_hh_net_income, 0
+    )
+    ahc_pov_gaps = np.maximum(
+        baseline_df.absolute_poverty_ahc - reform_hh_net_income, 0
+    )
+    # TODO: Make this work with a filtered group.
+    bhc_pov_gap = np.sum(bhc_pov_gaps * baseline_df.household_weight)
+    ahc_pov_gap = np.sum(ahc_pov_gaps * baseline_df.household_weight)
     # Gini of income per person.
-    reform_hh_net_income_pp = reform_hh_net_income / people_in_household
+    reform_hh_net_income_pp = (
+        reform_hh_net_income / baseline_df.people_in_household
+    )
     # mdf.gini requires a dataframe.
     reform_df = pd.DataFrame(
         {"reform_hh_net_income_pp": reform_hh_net_income_pp, "weight": weight}
     )
-    reform_gini = mdf.gini(reform_df, "reform_hh_net_income_pp", "weight")
+    gini = mdf.gini(reform_df, "reform_hh_net_income_pp", "weight")
     # Return Series of all metrics.
     return pd.Series(
-        [loser_share, losses, mean_pct_loss, mean_pct_loss_pwd2, reform_gini],
-        index=[
-            "loser_share",
-            "losses",
-            "mean_pct_loss",
-            "mean_pct_loss_pwd2",
-            "reform_gini",
-        ],
+        {
+            "loser_share": loser_share,
+            "losses": losses,
+            "mean_pct_loss": mean_pct_loss,
+            "mean_pct_loss_pwd2": mean_pct_loss_pwd2,
+            "poverty_gap_bhc": poverty_gap_bhc,
+            "poverty_gap_ahc": poverty_gap_ahc,
+            "gini": gini,
+        }
     )
