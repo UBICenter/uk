@@ -56,16 +56,16 @@ def loss_metrics(x: list) -> pd.Series:
     )
     total_pop_pwd2 = pwd2_weight.sum()  # Denominator.
     mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
-    # # Poverty gap.
-    # bhc_pov_gaps = np.maximum(
-    #     base_df.absolute_poverty_bhc - reform_df.household_net_income, 0
-    # )
-    # ahc_pov_gaps = np.maximum(
-    #     base_df.absolute_poverty_ahc - reform_df.household_net_income, 0
-    # )
-    # # TODO: Make this work with a filtered group.
-    # poverty_gap_bhc = np.sum(bhc_pov_gaps * base_df.household_weight)
-    # poverty_gap_ahc = np.sum(ahc_pov_gaps * base_df.household_weight)
+    # Poverty gap.
+    bhc_pov_gaps = np.maximum(
+        295 - reform_df.household_net_income / reform_df.household_equivalisation_bhc, 0
+    )
+    ahc_pov_gaps = np.maximum(
+        253 - reform_df.household_net_income_ahc / reform_df.household_equivalisation_ahc, 0
+    )
+    # TODO: Make this work with a filtered group.
+    poverty_gap_bhc = np.sum(bhc_pov_gaps * baseline_df.household_weight)
+    poverty_gap_ahc = np.sum(ahc_pov_gaps * baseline_df.household_weight)
     # Gini of income per person.
     reform_hh_net_income_pp = (
         reform_df.household_net_income / baseline_df.people_in_household
@@ -82,8 +82,8 @@ def loss_metrics(x: list) -> pd.Series:
             "losses": losses,
             "mean_pct_loss": mean_pct_loss,
             "mean_pct_loss_pwd2": mean_pct_loss_pwd2,
-            # "poverty_gap_bhc": poverty_gap_bhc,
-            # "poverty_gap_ahc": poverty_gap_ahc,
+            "poverty_gap_bhc": poverty_gap_bhc,
+            "poverty_gap_ahc": poverty_gap_ahc,
             "gini": gini,
         }
     )
