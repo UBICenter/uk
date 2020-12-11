@@ -29,8 +29,9 @@ def loss_metrics(x: list) -> pd.Series:
     :rtype: pd.Series
     """
     # Extract parameters and generate reform DataFrame.
-    senior, child, dis_1, dis_2, dis_3 = x[:5]
-    regions = np.array(x[5:])
+    senior = x[0]
+    child, dis_1, dis_2, dis_3 = x[2:6]
+    regions = np.array(x[6:])
     reform_df = set_ubi(
         reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
     )
