@@ -16,12 +16,45 @@ def optimize(input_dict, loss_metric):
   
   # Declare categories 
   CATEGORIES = ['senior', 'adult', 'child', 'dis_1', 'dis_2', 'dis_3','NORTH_EAST', 'NORTH_WEST', 
+<<<<<<< HEAD
                 'YORKSHIRE', 'EAST_MIDLANDS', 'WEST_MIDLANDS', 'EAST_OF_ENGLAND', 'LONDON', 
                 'SOUTH_EAST', 'SOUTH_WEST', 'WALES', 'SCOTLAND', 'NORTHERN_IRELAND']
 
   bounds = [input_dict[i] for i in CATEGORIES]
   
   # Take the average value of each tuple to create array of starting values
+=======
+
+                'YORKSHIRE', 'EAST_MIDLANDS', 'WEST_MIDLANDS', 'EAST_OF_ENGLAND', 'LONDON', 
+                'SOUTH_EAST', 'SOUTH_WEST', 'WALES', 'SCOTLAND', 'NORTHERN IRELAND']
+
+  # Assign values for ordering
+  senior = input_dict['senior']
+  child = input_dict['child']
+  dis_1 = input_dict['dis_1']
+  dis_2 = input_dict['dis_2']
+  dis_3 = input_dict['dis_3']
+  NORTH_EAST = input_dict['NORTH_EAST']
+  NORTH_WEST = input_dict['NORTH_WEST']
+  YORKSHIRE = input_dict['YORKSHIRE']
+  EAST_MIDLANDS = input_dict['EAST_MIDLANDS']
+  WEST_MIDLANDS = input_dict['WEST_MIDLANDS']
+  EAST_OF_ENGLAND = input_dict['EAST_OF_ENGLAND']
+  LONDON = input_dict['LONDON']
+  SOUTH_EAST = input_dict['SOUTH_EAST']
+  SOUTH_WEST = input_dict['SOUTH_WEST']
+  WALES = input_dict['WALES']
+  SCOTLAND = input_dict['SCOTLAND']
+  NORTHERN_IRELAND = input_dict['NORTHERN_IRELAND']
+
+
+  # Declare bounds for each amount
+  bounds = [senior, child, dis_1, dis_2, dis_3, NORTH_EAST, NORTH_WEST, YORKSHIRE, EAST_MIDLANDS,
+            WEST_MIDLANDS, EAST_OF_ENGLAND, LONDON, SOUTH_EAST, SOUTH_WEST, WALES, SCOTLAND, NORTHER_IRELAND]
+  
+  # Take the average value of each tuple to create array of starting values
+
+>>>>>>> 521897bca44855ccdf61438da7eab1e7449df9f9
   x = [((i[0] + i[1])/2) for i in bounds]
 
   def loss_func(x, args=(loss_metric)):
