@@ -42,7 +42,8 @@ def optimize(input_dict, loss_metric):
   bounds = [senior, child, dis_1, dis_2, dis_3, NORTH_EAST, NORTH_WEST, YORKSHIRE, EAST_MIDLANDS,
             WEST_MIDLANDS, EAST_OF_ENGLAND, LONDON, SOUTH_EAST, SOUTH_WEST, WALES, SCOTLAND, NORTHER_IRELAND]
   
-  # Take the average value of each tuple to create array
+  # Take the average value of each tuple to create array of starting values
+
   x = [((i[0] + i[1])/2) for i in bounds]
 
   def loss_func(x, args=(loss_metric)):
