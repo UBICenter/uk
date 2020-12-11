@@ -35,7 +35,8 @@ def optimize(input_dict, loss_metric):
   SOUTH_WEST = input_dict['SOUTH_WEST']
   WALES = input_dict['WALES']
   SCOTLAND = input_dict['SCOTLAND']
-  NORTHER_IRELAND = input_dict['NORTHERN_IRELAND']
+  NORTHERN_IRELAND = input_dict['NORTHERN_IRELAND']
+
 
   # Declare bounds for each amount
   bounds = [senior, child, dis_1, dis_2, dis_3, NORTH_EAST, NORTH_WEST, YORKSHIRE, EAST_MIDLANDS,
