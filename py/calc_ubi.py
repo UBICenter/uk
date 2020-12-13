@@ -198,6 +198,34 @@ def get_data(path=None):
     return baseline_df, reform_base_df, budget
 
 
+def get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=False, individual=False, pass_income=False
+):
+    basic_income = (
+        base_df["is_SP_age"] * senior
+        + base_df["is_child"] * child
+        + base_df["is_disabled"] * dis_1
+        + base_df["is_enhanced_disabled"] * dis_2
+        + base_df["is_severely_disabled"] * dis_3
+    ) * 52
+    for i, region_name in zip(range(len(regions)), REGIONS):
+        basic_income += (
+            np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
+            * 52
+        )
+    total_cost = np.sum(basic_income * base_df["household_weight"])
+    adult_amount = (budget - total_cost) / np.sum(
+        base_df["is_WA_adult"] * base_df["household_weight"]
+    )
+    if verbose:
+        print(f"Adult amount: {gbp(adult_amount / 52)}/week")
+    if pass_income:
+        return basic_income, adult_amount
+    if individual:
+        return (adult_amount/52)
+    else:
+        return adult_amount
+
+
 def set_ubi(
     base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=False
 ):
@@ -217,24 +245,7 @@ def set_ubi(
     Returns:
         DataFrame: Reform household-level DataFrame
     """
-    basic_income = (
-        base_df["is_SP_age"] * senior
-        + base_df["is_child"] * child
-        + base_df["is_disabled"] * dis_1
-        + base_df["is_enhanced_disabled"] * dis_2
-        + base_df["is_severely_disabled"] * dis_3
-    ) * 52
-    for i, region_name in zip(range(len(regions)), REGIONS):
-        basic_income += (
-            np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
-            * 52
-        )
-    total_cost = np.sum(basic_income * base_df["household_weight"])
-    adult_amount = (budget - total_cost) / np.sum(
-        base_df["is_WA_adult"] * base_df["household_weight"]
-    )
-    if verbose:
-        print(f"Adult amount: {gbp(adult_amount / 52)}/week")
+    basic_income, adult_amount = get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, pass_income=True)
     basic_income += base_df["is_WA_adult"] * adult_amount
     reform_df = base_df
     reform_df["basic_income"] = basic_income

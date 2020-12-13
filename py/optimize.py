@@ -1,5 +1,10 @@
-from scipy.optimize import differential_evolution
-from uk.py.loss_functions import loss_metrics
+from scipy.optimize import differential_evolution, OptimizeResult
+from uk.py.loss_functions import loss_metrics, extract
+from uk.py.calc_ubi import get_data, get_adult_amount
+
+
+baseline_df, reform_base_df, budget = get_data()
+
 
 def optimize(input_dict, loss_metric):
 
@@ -20,7 +25,7 @@ def optimize(input_dict, loss_metric):
                 'SOUTH_EAST', 'SOUTH_WEST', 'WALES', 'SCOTLAND', 'NORTHERN_IRELAND']
 
   bounds = [input_dict[i] for i in CATEGORIES]
-  
+
   # Take the average value of each tuple to create array of starting values
   x = [((i[0] + i[1])/2) for i in bounds]
 
@@ -30,12 +35,17 @@ def optimize(input_dict, loss_metric):
     # Calculate loss with current solution.
     loss = loss_metrics(x)[loss_metric]
 
+    # Update the adult amount in x
+    senior, child, dis_1, dis_2, dis_3, regions = extract(x)
+    x[1] = get_adult_amount(reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, individual=True)
+
     # Print loss and corresponding solution set
-    output_dict = {CATEGORIES[i]: x[i-1] for i in range(len(x))}
+    output_dict = {CATEGORIES[i]: x[i] for i in range(len(x))}
     print ('Loss: {}'.format(loss))
     print (output_dict)
 
     return loss
   
-  result = differential_evolution(func=loss_func, bounds=bounds, maxiter=1)
-
+  result = differential_evolution(func=loss_func, bounds=bounds, maxiter=1, seed=0)
+  
+  return result

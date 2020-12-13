@@ -3,10 +3,19 @@ import pandas as pd
 import microdf as mdf
 
 # File in repo.
-from calc_ubi import get_data, set_ubi
+from uk.py.calc_ubi import get_data, set_ubi
 
 
 baseline_df, reform_base_df, budget = get_data()
+
+
+def extract(x
+):
+    # Extract parameters and generate reform DataFrame.
+    senior = x[0]
+    child, dis_1, dis_2, dis_3 = x[2:6]
+    regions = np.array(x[6:])
+    return senior, child, dis_1, dis_2, dis_3, regions
 
 
 def loss_metrics(x: list) -> pd.Series:
@@ -28,12 +37,9 @@ def loss_metrics(x: list) -> pd.Series:
             scenario, weighted by person weight at the household level.
     :rtype: pd.Series
     """
-    # Extract parameters and generate reform DataFrame.
-    senior = x[0]
-    child, dis_1, dis_2, dis_3 = x[2:6]
-    regions = np.array(x[6:])
+    senior, child, dis_1, dis_2, dis_3, regions = extract(x)
     reform_df = set_ubi(
-        reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
+        reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=True
     )
     # Calculate loss-related loss metrics.
     change = reform_df.household_net_income - baseline_df.household_net_income
