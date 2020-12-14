@@ -3,8 +3,6 @@ from uk.py.loss_functions import loss_metrics, extract
 from uk.py.calc_ubi import get_data, get_adult_amount
 
 
-baseline_df, reform_base_df, budget = get_data()
-
 
 def optimize(input_dict, loss_metric):
 
@@ -26,6 +24,9 @@ def optimize(input_dict, loss_metric):
 
   bounds = [input_dict[i] for i in CATEGORIES]
 
+  
+  baseline_df, reform_base_df, budget = get_data()
+
   # Take the average value of each tuple to create array of starting values
   x = [((i[0] + i[1])/2) for i in bounds]
 
@@ -33,7 +34,7 @@ def optimize(input_dict, loss_metric):
     loss_metric = args
 
     # Calculate loss with current solution.
-    loss = loss_metrics(x)[loss_metric]
+    loss = loss_metrics(x, baseline_df, reform_base_df, budget)[loss_metric]
 
     # Update the adult amount in x
     senior, child, dis_1, dis_2, dis_3, regions = extract(x)

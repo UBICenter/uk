@@ -6,9 +6,6 @@ import microdf as mdf
 from uk.py.calc_ubi import get_data, set_ubi
 
 
-baseline_df, reform_base_df, budget = get_data()
-
-
 def extract(x
 ):
     # Extract parameters and generate reform DataFrame.
@@ -18,7 +15,7 @@ def extract(x
     return senior, child, dis_1, dis_2, dis_3, regions
 
 
-def loss_metrics(x: list) -> pd.Series:
+def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
     """Calculate each potential loss metric.
 
     :param x: List of optimization elements:
@@ -57,22 +54,12 @@ def loss_metrics(x: list) -> pd.Series:
     total_pct_loss = np.sum(weight[valid_pct_loss] * pct_loss[valid_pct_loss])
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.
-    pwd2_weight = weight * np.where(baseline_df.is_disabled, 2, 1)
+    pwd2_weight = baseline_df.household_weight * (baseline_df.is_disabled + baseline_df.people_in_household)
     total_pct_loss_pwd2 = np.sum(
         pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss]
     )
     total_pop_pwd2 = pwd2_weight.sum()  # Denominator.
     mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
-    # Poverty gap.
-    bhc_pov_gaps = np.maximum(
-        295 - reform_df.household_net_income / reform_df.household_equivalisation_bhc, 0
-    )
-    ahc_pov_gaps = np.maximum(
-        253 - reform_df.household_net_income_ahc / reform_df.household_equivalisation_ahc, 0
-    )
-    # TODO: Make this work with a filtered group.
-    poverty_gap_bhc = np.sum(bhc_pov_gaps * baseline_df.household_weight)
-    poverty_gap_ahc = np.sum(ahc_pov_gaps * baseline_df.household_weight)
     # Gini of income per person.
     reform_hh_net_income_pp = (
         reform_df.household_net_income / baseline_df.people_in_household
@@ -89,8 +76,6 @@ def loss_metrics(x: list) -> pd.Series:
             "losses": losses,
             "mean_pct_loss": mean_pct_loss,
             "mean_pct_loss_pwd2": mean_pct_loss_pwd2,
-            "poverty_gap_bhc": poverty_gap_bhc,
-            "poverty_gap_ahc": poverty_gap_ahc,
             "gini": gini,
         }
     )

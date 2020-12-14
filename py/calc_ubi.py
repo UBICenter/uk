@@ -183,11 +183,11 @@ def get_data(path=None):
     else:
         person, benunit, household = frs.load()
     baseline = PopulationSim(frs_data=(person, benunit, household))
-    baseline_df = calc2df(baseline, BASELINE_COLS)
+    baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, 0, 0, np.array([0] * 12))
     reform_no_ubi_sim = PopulationSim(reform_no_ubi, frs_data=FRS_DATA)
-    reform_base_df = calc2df(reform_no_ubi_sim, BASELINE_COLS)
+    reform_base_df = calc2df(reform_no_ubi_sim, BASELINE_COLS, map_to="household")
     budget = -np.sum(
         baseline.calc("household_weight")
         * (
@@ -247,7 +247,7 @@ def set_ubi(
     """
     basic_income, adult_amount = get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, pass_income=True)
     basic_income += base_df["is_WA_adult"] * adult_amount
-    reform_df = base_df
+    reform_df = base_df.copy(deep=True)
     reform_df["basic_income"] = basic_income
     reform_df["household_net_income"] += basic_income
     reform_df["household_net_income_ahc"] += basic_income
