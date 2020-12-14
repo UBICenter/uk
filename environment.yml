@@ -8,3 +8,4 @@ dependencies:
 - pip:
   - jupyter-book
   - "git+https://github.com/PSLmodels/microdf.git"
+  - sphinxcontrib-bibtex==1.0.0
