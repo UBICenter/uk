@@ -245,7 +245,7 @@ def set_ubi(
     Returns:
         DataFrame: Reform household-level DataFrame
     """
-    basic_income, adult_amount = get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, pass_income=True)
+    basic_income, adult_amount = get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, pass_income=True, verbose=verbose)
     basic_income += base_df["is_WA_adult"] * adult_amount
     reform_df = base_df.copy(deep=True)
     reform_df["basic_income"] = basic_income
