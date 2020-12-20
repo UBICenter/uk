@@ -1,9 +1,11 @@
+import numpy as np
 from scipy.optimize import differential_evolution, OptimizeResult
 from uk.py.loss_functions import loss_metrics, extract
 from uk.py.calc_ubi import get_data, get_adult_amount
 
 
-def optimize(input_dict, loss_metric, reform):
+def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
+
 
   '''
   Arguments:
@@ -17,17 +19,17 @@ def optimize(input_dict, loss_metric, reform):
   '''
   
   # Declare categories 
-  CATEGORIES = ['senior', 'adult', 'child', 'dis_1', 'dis_2', 'dis_3','NORTH_EAST', 'NORTH_WEST', 
+  CATEGORIES = ['senior', 'child', 'dis_1', 'dis_2', 'dis_3','NORTH_EAST', 'NORTH_WEST', 
                 'YORKSHIRE', 'EAST_MIDLANDS', 'WEST_MIDLANDS', 'EAST_OF_ENGLAND', 'LONDON', 
                 'SOUTH_EAST', 'SOUTH_WEST', 'WALES', 'SCOTLAND', 'NORTHERN_IRELAND']
 
   # Set bounds according to chosen reform.
   if reform == 'reform_1':
-    bounds = [input_dict[i] for i in CATEGORIES[:3]]
-    bounds += [(0,0)] * 15
+    bounds = [input_dict[i] for i in CATEGORIES[:2]]
+    bounds += [(0,0)] * 14
   elif reform == 'reform_2':
-    bounds = [input_dict[i] for i in CATEGORIES[:6]]
-    bounds += [(0,0)] * 12
+    bounds = [input_dict[i] for i in CATEGORIES[:5]]
+    bounds += [(0,0)] * 11
   elif reform == 'reform_3':
     bounds = [input_dict[i] for i in CATEGORIES]
   
@@ -46,11 +48,21 @@ def optimize(input_dict, loss_metric, reform):
 
     # Print loss and corresponding solution set
     output_dict = {CATEGORIES[i]: x[i] for i in range(len(x))}
-    print ('Loss: {}'.format(loss))
-    print (output_dict)
+
+    if print_output:
+      print ('Loss: {}'.format(loss))
+      print (output_dict)
 
     return loss
   
-  result = differential_evolution(func=loss_func, bounds=bounds, maxiter=1, seed=0)
+  result = differential_evolution(func=loss_func, bounds=bounds, **kwargs)
+
+  # Get adult amount
+  senior, child, dis_1, dis_2, dis_3, regions = extract(result.x)
+  adult_amount = get_adult_amount(reform_base_df, budget, senior, child, dis_1,
+                                  dis_2, dis_3, regions, individual=True)
   
+  # Insert adult amount into optimal solution set
+  result.x = np.insert(result.x, 1, adult_amount)
+
   return result

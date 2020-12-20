@@ -9,9 +9,8 @@ from uk.py.calc_ubi import get_data, set_ubi
 def extract(x
 ):
     # Extract parameters and generate reform DataFrame.
-    senior = x[0]
-    child, dis_1, dis_2, dis_3 = x[2:6]
-    regions = np.array(x[6:])
+    senior, child, dis_1, dis_2, dis_3 = x[:5]
+    regions = np.array(x[5:])
     return senior, child, dis_1, dis_2, dis_3, regions
 
 
@@ -36,7 +35,7 @@ def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
     """
     senior, child, dis_1, dis_2, dis_3, regions = extract(x)
     reform_df = set_ubi(
-        reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=True
+        reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
     )
     # Calculate loss-related loss metrics.
     change = reform_df.household_net_income - baseline_df.household_net_income
