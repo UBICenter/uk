@@ -12,9 +12,11 @@ def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
   - input_dict = a dict with format {category: (min, max)} specifying the bounds for UBI amounts
                  for each category. If min == max, the amount is fixed.
   - loss_metric = the type of loss metric to be used in optimization.
+  - reform = the type of reform to apply
+  - print_output = bool specifying whether or not to print each function evaluation
+  - **kwargs = kwargs for differential_evolution
 
   Returns:
-  - prints the loss and corresponding UBI amount per category solution set for each function evaluation.
   - return an OptimizeResult with the optimal solution.
   '''
   
