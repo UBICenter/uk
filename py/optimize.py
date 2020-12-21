@@ -1,10 +1,11 @@
 import numpy as np
+import pandas
 from scipy.optimize import differential_evolution, OptimizeResult
 from uk.py.loss_functions import loss_metrics, extract
 from uk.py.calc_ubi import get_data, get_adult_amount
 
 
-def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
+def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
 
 
   '''
@@ -12,10 +13,13 @@ def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
   - input_dict = a dict with format {category: (min, max)} specifying the bounds for UBI amounts
                  for each category. If min == max, the amount is fixed.
   - loss_metric = the type of loss metric to be used in optimization.
+  - reform = the type of reform to apply
+  - verbose = bool specifying whether or not to print each function evaluation
+  - **kwargs = kwargs for differential_evolution
 
   Returns:
-  - prints the loss and corresponding UBI amount per category solution set for each function evaluation.
   - return an OptimizeResult with the optimal solution.
+  - prints and output_dict with the optimal solution.
   '''
   
   # Declare categories 
@@ -39,6 +43,9 @@ def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
 
   # Take the average value of each tuple to create array of starting values
   x = [((i[0] + i[1])/2) for i in bounds]
+  
+  # Add in the adult amount key
+  CATEGORIES = ['adult'] + CATEGORIES
 
   def loss_func(x, args=(loss_metric)):
     loss_metric = args
@@ -46,16 +53,25 @@ def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
     # Calculate loss with current solution (given the adult amount)
     loss = loss_metrics(x, baseline_df, reform_base_df, budget)[loss_metric]
 
-    # Print loss and corresponding solution set
-    output_dict = {CATEGORIES[i]: x[i] for i in range(len(x))}
+    if verbose:
+      senior, child, dis_1, dis_2, dis_3, regions = extract(x)
+      adult_amount = get_adult_amount(reform_base_df, budget, senior, child,
+                                      dis_1, dis_2, dis_3, regions, 
+                                      individual=True)
+      x = np.insert(x, 0, adult_amount)
+      output_dict = {CATEGORIES[i]: x[i] for i in range(len(x))}
 
-    if print_output:
+      # Print loss and corresponding solution set
       print ('Loss: {}'.format(loss))
       print (output_dict)
 
     return loss
   
   result = differential_evolution(func=loss_func, bounds=bounds, **kwargs)
+  
+  # Performance of optimal solutions on other loss metrics
+  loss_dict = loss_metrics(result.x, baseline_df, reform_base_df, budget).to_dict()
+  print ('Loss by all metrics:\n', loss_dict, '\n')
 
   # Get adult amount
   senior, child, dis_1, dis_2, dis_3, regions = extract(result.x)
@@ -63,6 +79,11 @@ def optimize(input_dict, loss_metric, reform, print_output=True, **kwargs):
                                   dis_2, dis_3, regions, individual=True)
   
   # Insert adult amount into optimal solution set
-  result.x = np.insert(result.x, 1, adult_amount)
+  result.x = np.insert(result.x, 0, adult_amount)
+
+  # Print optimal solution output_dict and optimal loss
+  output_dict = {CATEGORIES[i]: result.x[i] for i in range(len(result.x))}
+  print ('Optimal {}:'.format(loss_metric), result.fun, '\n')
+  print ('Optimal solution:\n', output_dict)
 
   return result
