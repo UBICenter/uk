@@ -20,6 +20,7 @@ def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
   Returns:
   - return an OptimizeResult with the optimal solution.
   - prints and output_dict with the optimal solution.
+  - prints the loss metrics for the optimal solution set.
   '''
   
   # Declare categories 
@@ -81,14 +82,11 @@ def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
   # Insert adult amount into optimal solution set
   result.x = np.insert(result.x, 0, adult_amount)
 
-<<<<<<< HEAD
-  # Print optimal solution output_dict and optimal loss
-  output_dict = {CATEGORIES[i]: result.x[i] for i in range(len(result.x))}
+  # Print optimal loss
   print ('Optimal {}:'.format(loss_metric), result.fun, '\n')
-=======
+
   # Print optimal solution output_dict
   output_dict = {CATEGORIES[i]: result.x[i] for i in range(len(result.x))}
->>>>>>> dabfafa2253b8a34ad1051e98b8a897745616ca1
   print ('Optimal solution:\n', output_dict)
 
   return result
