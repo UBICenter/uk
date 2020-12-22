@@ -14,6 +14,7 @@ from rdbl import gbp
 from openfisca_uk.tools.general import add
 from openfisca_core.model_api import *
 from openfisca_uk.entities import *
+from openfisca_uk.reforms.modelling import reported_benefits
 
 
 def calc2df(
@@ -188,7 +189,7 @@ def get_data(path=None):
         household = pd.read_csv(path + "/household.csv")
     else:
         person, benunit, household = frs.load()
-    baseline = PopulationSim(frs_data=(person, benunit, household))
+    baseline = PopulationSim(reported_benefits, frs_data=(person, benunit, household))
     baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, 0, 0, np.array([0] * 12))
