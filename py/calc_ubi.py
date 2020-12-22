@@ -114,8 +114,8 @@ def ubi_reform(senior, adult, child, dis_base, dis_severe, dis_enhanced, geo):
                 + ubi_piece(adult, "is_WA_adult")
                 + ubi_piece(child, "is_child")
                 + ubi_piece(dis_base, "is_disabled_for_ubi")
-                + ubi_piece(dis_severe, "is_sever_disabled_for_ubi")
-                + ubi_piece(dis_enhanced, "is_severely_disabled")
+                + ubi_piece(dis_severe, "is_severely_disabled_for_ubi")
+                + ubi_piece(dis_enhanced, "is_enhanced_disabled_for_ubi")
                 + geo[person.household("region").astype(int)]
             )
 
