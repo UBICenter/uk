@@ -42,16 +42,16 @@ BASELINE_COLS = [
     "is_SP_age",
     "is_child",
     "is_WA_adult",
-    "is_disabled",
-    "is_enhanced_disabled",
-    "is_severely_disabled",
+    "is_disabled_for_ubi",
+    "is_severely_disabled_for_ubi",
+    "is_enhanced_disabled_for_ubi",
     "region",
     "household_weight",
     "household_net_income",
     "household_net_income_ahc",
     "people_in_household",
     "household_equivalisation_bhc",
-    "household_equivalisation_ahc"
+    "household_equivalisation_ahc",
 ]
 
 CORE_BENEFITS = [
@@ -70,16 +70,19 @@ CORE_BENEFITS = [
 ]
 
 
-def ubi_reform(senior, adult, child, dis_1, dis_2, dis_3, geo):
+def ubi_reform(senior, adult, child, dis_base, dis_severe, dis_enhanced, geo):
     """Create an OpenFisca-UK reform class.
 
     Args:
         senior (float): Pensioner UBI amount per week
         adult (float): Adult UBI amount per week
         child (float): Child UBI amount per week
-        dis_1 (float): Disabled (Equality Act+) supplement per week
-        dis_2 (float): Enhanced disabled supplement per week
-        dis_3 (float): Severely disabled supplement per week
+        dis_base (float): Supplement per week for people claiming any
+            disability benefit.
+        dis_severe (float): Supplement per week for people claiming any
+            medium-sized disability benefit.
+        dis_enhanced (float): Supplement per week for people claiming highest
+            value of any disability benefit.
         geo (ndarray): Numpy float array of 12 UK regional supplements per week
 
     Returns:
@@ -101,15 +104,18 @@ def ubi_reform(senior, adult, child, dis_1, dis_2, dis_3, geo):
         label = "Amount of basic income received per week"
         definition_period = WEEK
 
+        def ubi_piece(value, flag):
+            return value * person(flag, period.this_year)
+
         def formula(person, period, parameters):
             region = person.household("region", period)
             return (
-                senior * person("is_SP_age", period.this_year)
-                + adult * person("is_WA_adult", period.this_year)
-                + child * person("is_child", period.this_year)
-                + dis_1 * person("is_disabled", period.this_year)
-                + dis_2 * person("is_enhanced_disabled", period.this_year)
-                + dis_3 * person("is_severely_disabled", period.this_year)
+                ubi_piece(senior, "is_SP_age")
+                + ubi_piece(adult, "is_WA_adult")
+                + ubi_piece(child, "is_child")
+                + ubi_piece(dis_base, "is_disabled_for_ubi")
+                + ubi_piece(dis_severe, "is_severely_disabled_for_ubi")
+                + ubi_piece(dis_enhanced, "is_enhanced_disabled_for_ubi")
                 + geo[person.household("region").astype(int)]
             )
 
@@ -187,7 +193,9 @@ def get_data(path=None):
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, 0, 0, np.array([0] * 12))
     reform_no_ubi_sim = PopulationSim(reform_no_ubi, frs_data=FRS_DATA)
-    reform_base_df = calc2df(reform_no_ubi_sim, BASELINE_COLS, map_to="household")
+    reform_base_df = calc2df(
+        reform_no_ubi_sim, BASELINE_COLS, map_to="household"
+    )
     budget = -np.sum(
         baseline.calc("household_weight")
         * (
@@ -198,14 +206,44 @@ def get_data(path=None):
     return baseline_df, reform_base_df, budget
 
 
-def get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=False, individual=False, pass_income=False
+def get_adult_amount(
+    base_df,
+    budget,
+    senior,
+    child,
+    dis_base,
+    dis_severe,
+    dis_enhanced,
+    regions,
+    verbose=False,
+    individual=False,
+    pass_income=False,
 ):
+    """Calculate budget-neutral UBI amounts per person.
+
+    Args:
+        base_df (DataFrame): UBI tax reform household-level DataFrame
+        budget (float): Total budget for UBI spending
+        senior (float): Pensioner UBI amount per week
+        child (float): Child UBI amount per week
+        dis_base (float): Supplement per week for people claiming any
+            disability benefit.
+        dis_severe (float): Supplement per week for people claiming any
+            medium-sized disability benefit.
+        dis_enhanced (float): Supplement per week for people claiming highest
+            value of any disability benefit.
+        regions (ndarray): Numpy float array of 12 UK regional supplements per week
+        verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
+
+    Returns:
+        DataFrame: Reform household-level DataFrame
+    """
     basic_income = (
         base_df["is_SP_age"] * senior
         + base_df["is_child"] * child
-        + base_df["is_disabled"] * dis_1
-        + base_df["is_enhanced_disabled"] * dis_2
-        + base_df["is_severely_disabled"] * dis_3
+        + base_df["is_disabled_for_ubi"] * dis_base
+        + base_df["is_severely_disabled_for_ubi"] * dis_severe
+        + base_df["is_enhanced_disabled_for_ubi"] * dis_enhanced
     ) * 52
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
@@ -221,7 +259,7 @@ def get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, region
     if pass_income:
         return basic_income, adult_amount
     if individual:
-        return (adult_amount/52)
+        return adult_amount / 52
     else:
         return adult_amount
 
@@ -245,7 +283,18 @@ def set_ubi(
     Returns:
         DataFrame: Reform household-level DataFrame
     """
-    basic_income, adult_amount = get_adult_amount(base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, pass_income=True, verbose=verbose)
+    basic_income, adult_amount = get_adult_amount(
+        base_df,
+        budget,
+        senior,
+        child,
+        dis_1,
+        dis_2,
+        dis_3,
+        regions,
+        pass_income=True,
+        verbose=verbose,
+    )
     basic_income += base_df["is_WA_adult"] * adult_amount
     reform_df = base_df.copy(deep=True)
     reform_df["basic_income"] = basic_income
