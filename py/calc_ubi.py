@@ -68,6 +68,14 @@ CORE_BENEFITS = [
     "ESA_income",
     "ESA_contrib",
     "housing_benefit",
+    "PIP_DL",
+    "PIP_M",
+    "carers_allowance",
+    "incapacity_benefit",
+    "SDA",
+    "AA",
+    "DLA_M",
+    "DLA_SC"
 ]
 
 
