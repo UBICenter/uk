@@ -75,7 +75,7 @@ CORE_BENEFITS = [
     "SDA",
     "AA",
     "DLA_M",
-    "DLA_SC"
+    "DLA_SC",
 ]
 
 
@@ -197,7 +197,9 @@ def get_data(path=None):
         household = pd.read_csv(path + "/household.csv")
     else:
         person, benunit, household = frs.load()
-    baseline = PopulationSim(reported_benefits, frs_data=(person, benunit, household))
+    baseline = PopulationSim(
+        reported_benefits, frs_data=(person, benunit, household)
+    )
     baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, 0, 0, np.array([0] * 12))

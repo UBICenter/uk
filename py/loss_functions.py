@@ -6,8 +6,7 @@ import microdf as mdf
 from uk.py.calc_ubi import get_data, set_ubi
 
 
-def extract(x
-):
+def extract(x):
     # Extract parameters and generate reform DataFrame.
     senior, child, dis_1, dis_2, dis_3 = x[:5]
     regions = np.array(x[5:])
@@ -53,7 +52,9 @@ def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
     total_pct_loss = np.sum(weight[valid_pct_loss] * pct_loss[valid_pct_loss])
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.
-    pwd2_weight = baseline_df.household_weight * (baseline_df.is_disabled + baseline_df.people_in_household)
+    pwd2_weight = baseline_df.household_weight * (
+        baseline_df.is_disabled + baseline_df.people_in_household
+    )
     total_pct_loss_pwd2 = np.sum(
         pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss]
     )
