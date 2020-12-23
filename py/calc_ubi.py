@@ -261,7 +261,11 @@ def get_adult_amount(
             np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
             * 52
         )
-    total_cost = np.sum(basic_income * base_df["household_weight"] * base_df["people_in_household"])
+    total_cost = np.sum(
+        basic_income
+        * base_df["household_weight"]
+        * base_df["people_in_household"]
+    )
     adult_amount = (budget - total_cost) / np.sum(
         base_df["is_WA_adult"] * base_df["household_weight"]
     )
