@@ -56,14 +56,16 @@ def optimize(
     ]
 
     # Set bounds according to chosen reform.
-    if reform == "reform_1":
+    ZERO = [(0, 0)]
+    if reform == "reform_1":  # Child/adult/senior only.
         bounds = [input_dict[i] for i in CATEGORIES[:2]]
-        bounds += [(0, 0)] * 14
-    elif reform == "reform_2":
+        bounds += ZERO * 14
+    elif reform == "reform_2": # Plus disability supplements.
         bounds = [input_dict[i] for i in CATEGORIES[:5]]
-        bounds += [(0, 0)] * 11
-    elif reform == "reform_3":
-        bounds = [input_dict[i] for i in CATEGORIES]
+        bounds += ZERO * 11
+    elif reform == "reform_3": # Plus geo supplements
+        bounds = [input_dict[i] for i in CATEGORIES[:-1]]
+        bounds += ZERO  # Last geo is a baseline.
 
     baseline_df, reform_base_df, budget = get_data(path=path)
 
