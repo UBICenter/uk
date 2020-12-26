@@ -1,25 +1,37 @@
 import numpy as np
 import pandas
 from scipy.optimize import differential_evolution, OptimizeResult
-from uk.py.loss_functions import loss_metrics, extract
-from uk.py.calc_ubi import get_data, get_adult_amount
+from py.loss_functions import loss_metrics, extract
+from py.calc_ubi import get_data, get_adult_amount
 
 
-def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
+def optimize(
+    input_dict: dict,
+    loss_metric: str,
+    reform: str,
+    verbose: bool = True,
+    path: str = None,
+    **kwargs
+) -> OptimizeResult:
+    """Also accepts **kwargs passed to differential_evolution.
 
-    """
-    Arguments:
-    - input_dict = a dict with format {category: (min, max)} specifying the bounds for UBI amounts
-                   for each category. If min == max, the amount is fixed.
-    - loss_metric = the type of loss metric to be used in optimization.
-    - reform = the type of reform to apply
-    - verbose = bool specifying whether or not to print each function evaluation
-    - **kwargs = kwargs for differential_evolution
-
-    Returns:
-    - return an OptimizeResult with the optimal solution.
-    - prints and output_dict with the optimal solution.
-    - prints the loss metrics for the optimal solution set.
+    :param input_dict: Dict with format {category: (min, max)} specifying the
+        bounds for UBI amounts for each category. If min == max, the amount is
+        fixed.
+    :type input_dict: dict
+    :param loss_metric: Type of loss metric to be used in optimization.
+    :type loss_metric: str
+    :param reform: Type of reform to apply.
+    :type reform: str
+    :param verbose: Bool specifying whether or not to print each function
+        evaluation, defaults to True
+    :type verbose: bool, optional
+    :param path: Path to FRS files, defaults to None in which case the files
+        are loaded via frs.load().
+    :type path: str, optional
+    :return: OptimizeResult with the optimal solution.
+        Also prints a dict with the optimal solution and loss metrics.
+    :rtype: OptimizeResult.
     """
 
     # Declare categories
@@ -53,7 +65,7 @@ def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
     elif reform == "reform_3":
         bounds = [input_dict[i] for i in CATEGORIES]
 
-    baseline_df, reform_base_df, budget = get_data()
+    baseline_df, reform_base_df, budget = get_data(path=path)
 
     # Take the average value of each tuple to create array of starting values
     x = [((i[0] + i[1]) / 2) for i in bounds]

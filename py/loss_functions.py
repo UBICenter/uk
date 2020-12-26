@@ -3,7 +3,7 @@ import pandas as pd
 import microdf as mdf
 
 # File in repo.
-from uk.py.calc_ubi import get_data, set_ubi
+from py.calc_ubi import get_data, set_ubi
 
 
 def extract(x):
