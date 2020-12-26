@@ -12,7 +12,7 @@ def optimize(
     verbose: bool = True,
     path: str = None,
     **kwargs
-) -> OptimizeResult:
+) -> tuple:
     """Also accepts **kwargs passed to differential_evolution.
 
     :param input_dict: Dict with format {category: (min, max)} specifying the
@@ -29,9 +29,10 @@ def optimize(
     :param path: Path to FRS files, defaults to None in which case the files
         are loaded via frs.load().
     :type path: str, optional
-    :return: OptimizeResult with the optimal solution.
+    :return: Tuple of OptimizeResult with the optimal solution and dict with
+        solution for each UBI component.
         Also prints a dict with the optimal solution and loss metrics.
-    :rtype: OptimizeResult.
+    :rtype: tuple
     """
 
     # Declare categories
@@ -128,13 +129,13 @@ def optimize(
     )
 
     # Insert adult amount into optimal solution set
-    result.x = np.insert(result.x, 0, adult_amount)
+    optimal_x = np.insert(result.x, 0, adult_amount)
 
     # Print optimal loss
     print("Optimal {}:".format(loss_metric), result.fun, "\n")
 
     # Print optimal solution output_dict
-    output_dict = {CATEGORIES[i]: result.x[i] for i in range(len(result.x))}
+    output_dict = {CATEGORIES[i]: optimal_x[i] for i in range(len(optimal_x))}
     print("Optimal solution:\n", output_dict)
 
-    return result
+    return result, output_dict
