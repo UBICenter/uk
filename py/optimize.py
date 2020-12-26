@@ -39,9 +39,9 @@ def optimize(
     CATEGORIES = [
         "senior",
         "child",
-        "dis_1",
-        "dis_2",
-        "dis_3",
+        "dis_base",
+        "dis_severe",
+        "dis_enhanced",
         "NORTH_EAST",
         "NORTH_WEST",
         "YORKSHIRE",
@@ -85,15 +85,22 @@ def optimize(
         ]
 
         if verbose:
-            senior, child, dis_1, dis_2, dis_3, regions = extract(x)
+            (
+                senior,
+                child,
+                dis_base,
+                dis_severe,
+                dis_enhanced,
+                regions,
+            ) = extract(x)
             adult_amount = get_adult_amount(
                 reform_base_df,
                 budget,
                 senior,
                 child,
-                dis_1,
-                dis_2,
-                dis_3,
+                dis_base,
+                dis_severe,
+                dis_enhanced,
                 regions,
                 individual=True,
             )
@@ -115,15 +122,17 @@ def optimize(
     print("Loss by all metrics:\n", loss_dict, "\n")
 
     # Get adult amount
-    senior, child, dis_1, dis_2, dis_3, regions = extract(result.x)
+    senior, child, dis_base, dis_severe, dis_enhanced, regions = extract(
+        result.x
+    )
     adult_amount = get_adult_amount(
         reform_base_df,
         budget,
         senior,
         child,
-        dis_1,
-        dis_2,
-        dis_3,
+        dis_base,
+        dis_severe,
+        dis_enhanced,
         regions,
         individual=True,
     )
