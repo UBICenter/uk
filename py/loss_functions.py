@@ -6,14 +6,19 @@ import microdf as mdf
 from py.calc_ubi import get_data, set_ubi
 
 
-def extract(x):
+def extract(x: list) -> tuple:
     # Extract parameters and generate reform DataFrame.
     senior, child, dis_base, dis_severe, dis_enhanced = x[:5]
     regions = np.array(x[5:])
     return senior, child, dis_base, dis_severe, dis_enhanced, regions
 
 
-def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
+def loss_metrics(
+    x: list,
+    baseline_df: pd.DataFrame,
+    reform_base_df: pd.DataFrame,
+    budget: int,
+) -> pd.Series:
     """Calculate each potential loss metric.
 
     :param x: List of optimization elements:

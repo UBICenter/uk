@@ -79,7 +79,15 @@ CORE_BENEFITS = [
 ]
 
 
-def ubi_reform(senior, adult, child, dis_base, dis_severe, dis_enhanced, geo):
+def ubi_reform(
+    senior: float,
+    adult: float,
+    child: float,
+    dis_base: float,
+    dis_severe: float,
+    dis_enhanced: float,
+    geo: np.array,
+):
     """Create an OpenFisca-UK reform class.
 
     Args:
@@ -218,18 +226,18 @@ def get_data(path=None):
 
 
 def get_adult_amount(
-    base_df,
-    budget,
-    senior,
-    child,
-    dis_base,
-    dis_severe,
-    dis_enhanced,
-    regions,
-    verbose=False,
-    individual=False,
-    pass_income=False,
-):
+    base_df: pd.DataFrame,
+    budget: float,
+    senior: float,
+    child: float,
+    dis_base: float,
+    dis_severe: float,
+    dis_enhanced: float,
+    regions: np.array,
+    verbose: bool = False,
+    individual: bool = False,
+    pass_income: bool = False,
+) -> pd.DataFrame:
     """Calculate budget-neutral UBI amounts per person.
 
     Args:
@@ -280,7 +288,15 @@ def get_adult_amount(
 
 
 def set_ubi(
-    base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=False
+    base_df: pd.DataFrame,
+    budget: float,
+    senior: float,
+    child: float,
+    dis_base: float,
+    dis_severe: float,
+    dis_enhanced: float,
+    regions: np.array,
+    verbose: bool = False,
 ):
     """Calculate budget-neutral UBI amounts per person.
 
@@ -289,9 +305,9 @@ def set_ubi(
         budget (float): Total budget for UBI spending
         senior (float): Pensioner UBI amount per week
         child (float): Child UBI amount per week
-        dis_1 (float): Disabled (Equality Act+) supplement per week
-        dis_2 (float): Enhanced disabled supplement per week
-        dis_3 (float): Severely disabled supplement per week
+        dis_base (float): Disabled (Equality Act+) supplement per week
+        dis_severe (float): Enhanced disabled supplement per week
+        dis_enhanced (float): Severely disabled supplement per week
         regions (ndarray): Numpy float array of 12 UK regional supplements per week
         verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
 
@@ -303,9 +319,9 @@ def set_ubi(
         budget,
         senior,
         child,
-        dis_1,
-        dis_2,
-        dis_3,
+        dis_base,
+        dis_severe,
+        dis_enhanced,
         regions,
         pass_income=True,
         verbose=verbose,
