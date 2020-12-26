@@ -61,10 +61,10 @@ def optimize(
     if reform == "reform_1":  # Child/adult/senior only.
         bounds = [input_dict[i] for i in CATEGORIES[:2]]
         bounds += ZERO * 14
-    elif reform == "reform_2": # Plus disability supplements.
+    elif reform == "reform_2":  # Plus disability supplements.
         bounds = [input_dict[i] for i in CATEGORIES[:5]]
         bounds += ZERO * 11
-    elif reform == "reform_3": # Plus geo supplements
+    elif reform == "reform_3":  # Plus geo supplements
         bounds = [input_dict[i] for i in CATEGORIES[:-1]]
         bounds += ZERO  # Last geo is a baseline.
 
@@ -134,8 +134,17 @@ def optimize(
     # Print optimal loss
     print("Optimal {}:".format(loss_metric), result.fun, "\n")
 
+    # Make geo supplements positive by shifting negatives to child/adult/senior
+    min_region = min(optimal_x)
+    for i in range(3):  # Child, adult, senior.
+        optimal_x[i] += min_region
+    for i in range(6, 18):  # Geos (TODO: don't hard-code this).
+        optimal_x[i] -= min_region
+
     # Print optimal solution output_dict
-    output_dict = {CATEGORIES[i]: optimal_x[i] for i in range(len(optimal_x))}
+    output_dict = {
+        CATEGORIES[i]: int(round(optimal_x[i])) for i in range(len(optimal_x))
+    }
     print("Optimal solution:\n", output_dict)
 
     return result, output_dict
