@@ -79,10 +79,6 @@ CORE_BENEFITS = [
 ]
 
 
-def ubi_piece(value, flag):
-    return value * person(flag, period.this_year)
-
-
 def ubi_reform(senior, adult, child, dis_base, dis_severe, dis_enhanced, geo):
     """Create an OpenFisca-UK reform class.
 
@@ -118,6 +114,9 @@ def ubi_reform(senior, adult, child, dis_base, dis_severe, dis_enhanced, geo):
         definition_period = WEEK
 
         def formula(person, period, parameters):
+            def ubi_piece(value, flag):
+                return value * person(flag, period.this_year)
+
             region = person.household("region", period)
             return (
                 ubi_piece(senior, "is_SP_age")
