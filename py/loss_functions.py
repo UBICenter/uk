@@ -17,7 +17,8 @@ def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
     """Calculate each potential loss metric.
 
     :param x: List of optimization elements:
-        [senior, child, dis_base, dis_severe, dis_enhanced, region1, region2, ..., region12]
+        [senior, child, dis_base, dis_severe, dis_enhanced, region1, region2,
+         ..., region12]
     :type x: list
     :return: Series with five elements:
         loser_share: Share of the population who come out behind.

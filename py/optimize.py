@@ -145,7 +145,8 @@ def optimize(
     # Print optimal loss
     print("Optimal {}:".format(loss_metric), result.fun, "\n")
 
-    # Make geo supplements positive by shifting negatives to child/adult/senior.
+    # Make geo supplements non-negative by shifting negatives to
+    # child/adult/senior base amounts.
     min_region = min(optimal_x)
     optimal_x.loc[AGE_CATEGORIES + ["adult"]] += min_region
     optimal_x.loc[REGIONS] -= min_region
