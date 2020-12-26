@@ -14,6 +14,7 @@ from rdbl import gbp
 from openfisca_uk.tools.general import add
 from openfisca_core.model_api import *
 from openfisca_uk.entities import *
+from openfisca_uk.reforms.modelling import reported_benefits
 
 
 def calc2df(
@@ -67,6 +68,14 @@ CORE_BENEFITS = [
     "ESA_income",
     "ESA_contrib",
     "housing_benefit",
+    "PIP_DL",
+    "PIP_M",
+    "carers_allowance",
+    "incapacity_benefit",
+    "SDA",
+    "AA",
+    "DLA_M",
+    "DLA_SC",
 ]
 
 
@@ -188,12 +197,16 @@ def get_data(path=None):
         household = pd.read_csv(path + "/household.csv")
     else:
         person, benunit, household = frs.load()
-    baseline = PopulationSim(frs_data=(person, benunit, household))
-    baseline_df = calc2df(baseline, BASELINE_COLS)
+    baseline = PopulationSim(
+        reported_benefits, frs_data=(person, benunit, household)
+    )
+    baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, 0, 0, np.array([0] * 12))
     reform_no_ubi_sim = PopulationSim(reform_no_ubi, frs_data=FRS_DATA)
-    reform_base_df = calc2df(reform_no_ubi_sim, BASELINE_COLS)
+    reform_base_df = calc2df(
+        reform_no_ubi_sim, BASELINE_COLS, map_to="household"
+    )
     budget = -np.sum(
         baseline.calc("household_weight")
         * (
@@ -204,7 +217,7 @@ def get_data(path=None):
     return baseline_df, reform_base_df, budget
 
 
-def set_ubi(
+def get_adult_amount(
     base_df,
     budget,
     senior,
@@ -214,6 +227,8 @@ def set_ubi(
     dis_enhanced,
     regions,
     verbose=False,
+    individual=False,
+    pass_income=False,
 ):
     """Calculate budget-neutral UBI amounts per person.
 
@@ -246,14 +261,57 @@ def set_ubi(
             np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
             * 52
         )
-    total_cost = np.sum(basic_income * base_df["household_weight"])
+    total_cost = np.sum(
+        basic_income
+        * base_df["household_weight"]
+        * base_df["people_in_household"]
+    )
     adult_amount = (budget - total_cost) / np.sum(
         base_df["is_WA_adult"] * base_df["household_weight"]
     )
     if verbose:
         print(f"Adult amount: {gbp(adult_amount / 52)}/week")
+    if pass_income:
+        return basic_income, adult_amount
+    if individual:
+        return adult_amount / 52
+    else:
+        return adult_amount
+
+
+def set_ubi(
+    base_df, budget, senior, child, dis_1, dis_2, dis_3, regions, verbose=False
+):
+    """Calculate budget-neutral UBI amounts per person.
+
+    Args:
+        base_df (DataFrame): UBI tax reform household-level DataFrame
+        budget (float): Total budget for UBI spending
+        senior (float): Pensioner UBI amount per week
+        child (float): Child UBI amount per week
+        dis_1 (float): Disabled (Equality Act+) supplement per week
+        dis_2 (float): Enhanced disabled supplement per week
+        dis_3 (float): Severely disabled supplement per week
+        regions (ndarray): Numpy float array of 12 UK regional supplements per week
+        verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
+
+    Returns:
+        DataFrame: Reform household-level DataFrame
+    """
+    basic_income, adult_amount = get_adult_amount(
+        base_df,
+        budget,
+        senior,
+        child,
+        dis_1,
+        dis_2,
+        dis_3,
+        regions,
+        pass_income=True,
+        verbose=verbose,
+    )
     basic_income += base_df["is_WA_adult"] * adult_amount
-    reform_df = base_df
+    reform_df = base_df.copy(deep=True)
     reform_df["basic_income"] = basic_income
     reform_df["household_net_income"] += basic_income
     reform_df["household_net_income_ahc"] += basic_income
