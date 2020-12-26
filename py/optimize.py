@@ -1,5 +1,5 @@
 import numpy as np
-import pandas
+import pandas as pd
 from scipy.optimize import differential_evolution, OptimizeResult
 from py.loss_functions import loss_metrics, extract
 from py.calc_ubi import get_data, get_adult_amount
@@ -36,12 +36,9 @@ def optimize(
     """
 
     # Declare categories
-    CATEGORIES = [
-        "senior",
-        "child",
-        "dis_base",
-        "dis_severe",
-        "dis_enhanced",
+    AGE_CATEGORIES = ["senior", "child"]
+    DIS_CATEGORIES = ["dis_base", "dis_severe", "dis_enhanced"]
+    REGIONS = [
         "NORTH_EAST",
         "NORTH_WEST",
         "YORKSHIRE",
@@ -58,23 +55,24 @@ def optimize(
 
     # Set bounds according to chosen reform.
     ZERO = [(0, 0)]
+    bounds = [input_dict[i] for i in AGE_CATEGORIES]
     if reform == "reform_1":  # Child/adult/senior only.
-        bounds = [input_dict[i] for i in CATEGORIES[:2]]
-        bounds += ZERO * 14
-    elif reform == "reform_2":  # Plus disability supplements.
-        bounds = [input_dict[i] for i in CATEGORIES[:5]]
-        bounds += ZERO * 11
-    elif reform == "reform_3":  # Plus geo supplements
-        bounds = [input_dict[i] for i in CATEGORIES[:-1]]
-        bounds += ZERO  # Last geo is a baseline.
+        bounds += ZERO * (len(DIS_CATEGORIES) + len(REGIONS))
+    else:  # Add disability supplements to reforms 2 and 3.
+        bounds += [input_dict[i] for i in DIS_CATEGORIES]
+        if reform == "reform_2":
+            bounds += ZERO * len(REGIONS)
+        else:  # Reform 3.
+            bounds += [input_dict[i] for i in REGIONS[:-1]]
+            bounds += ZERO  # Last geo is a baseline.
 
     baseline_df, reform_base_df, budget = get_data(path=path)
 
     # Take the average value of each tuple to create array of starting values
     x = [((i[0] + i[1]) / 2) for i in bounds]
 
-    # Add in the adult amount key
-    CATEGORIES = ["adult"] + CATEGORIES
+    # Create full list (in order) of categories.
+    categories = ["adult"] + AGE_CATEGORIES + DIS_CATEGORIES + REGIONS
 
     def loss_func(x, args=(loss_metric)):
         loss_metric = args
@@ -105,7 +103,9 @@ def optimize(
                 individual=True,
             )
             x = np.insert(x, 0, adult_amount)
-            output_dict = {CATEGORIES[i]: x[i] for i in range(len(x))}
+            output_dict = {
+                categories[i]: x[i] for i in range(len(x))
+            }
 
             # Print loss and corresponding solution set
             print("Loss: {}".format(loss))
@@ -137,23 +137,21 @@ def optimize(
         individual=True,
     )
 
-    # Insert adult amount into optimal solution set
-    optimal_x = np.insert(result.x, 0, adult_amount)
+    # Construct pandas Series of optimal result and insert adult amount.
+    optimal_x = pd.Series(
+        np.insert(result.x, 0, adult_amount), index=categories
+    )
 
     # Print optimal loss
     print("Optimal {}:".format(loss_metric), result.fun, "\n")
 
-    # Make geo supplements positive by shifting negatives to child/adult/senior
+    # Make geo supplements positive by shifting negatives to child/adult/senior.
     min_region = min(optimal_x)
-    for i in range(3):  # Child, adult, senior.
-        optimal_x[i] += min_region
-    for i in range(6, 18):  # Geos (TODO: don't hard-code this).
-        optimal_x[i] -= min_region
+    optimal_x.loc[AGE_CATEGORIES + ["adult"]] += min_region
+    optimal_x.loc[REGIONS] -= min_region
 
-    # Print optimal solution output_dict
-    output_dict = {
-        CATEGORIES[i]: int(round(optimal_x[i])) for i in range(len(optimal_x))
-    }
-    print("Optimal solution:\n", output_dict)
+    optimal_x = optimal_x.round()
+    # Print optimal solution.
+    print("Optimal solution:\n", optimal_x)
 
-    return result, output_dict
+    return result, optimal_x
