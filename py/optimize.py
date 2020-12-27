@@ -119,7 +119,7 @@ def optimize(
     loss_dict = loss_metrics(
         result.x, baseline_df, reform_base_df, budget
     ).to_dict()
-    print("Loss by all metrics:\n", loss_dict, "\n")
+    print("Loss by all metrics:\n", pd.Series(loss_dict).round(4), "\n")
 
     # Get adult amount
     senior, child, dis_base, dis_severe, dis_enhanced, regions = extract(
@@ -143,7 +143,7 @@ def optimize(
     )
 
     # Print optimal loss
-    print("Optimal {}:".format(loss_metric), result.fun, "\n")
+    print("Optimal {}:".format(loss_metric), round(result.fun, 4), "\n")
 
     # Make geo supplements non-negative by shifting negatives to
     # child/adult/senior base amounts.
@@ -151,8 +151,7 @@ def optimize(
     optimal_x.loc[AGE_CATEGORIES + ["adult"]] += min_region
     optimal_x.loc[REGIONS] -= min_region
 
-    optimal_x = optimal_x.round()
     # Print optimal solution.
-    print("Optimal solution:\n", optimal_x)
+    print("Optimal solution:\n", optimal_x.round().astype(int))
 
     return result, optimal_x
