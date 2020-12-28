@@ -10,4 +10,4 @@ dependencies:
   - "git+https://github.com/PSLmodels/microdf.git"
   - sphinxcontrib-bibtex==1.0.0
   - "git+https://github.com/PSLmodels/openfisca-uk.git"
-  - "git+https://github.com/nikhilwoodruff/openfisca-core.git"
+  # - "git+https://github.com/nikhilwoodruff/openfisca-core.git"
