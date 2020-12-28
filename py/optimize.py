@@ -1,34 +1,44 @@
 import numpy as np
-import pandas
+import pandas as pd
 from scipy.optimize import differential_evolution, OptimizeResult
-from uk.py.loss_functions import loss_metrics, extract
-from uk.py.calc_ubi import get_data, get_adult_amount
+from py.loss_functions import loss_metrics, extract
+from py.calc_ubi import get_data, get_adult_amount
 
 
-def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
+def optimize(
+    input_dict: dict,
+    loss_metric: str,
+    reform: str,
+    verbose: bool = True,
+    path: str = None,
+    **kwargs
+) -> tuple:
+    """Also accepts **kwargs passed to differential_evolution.
 
-    """
-    Arguments:
-    - input_dict = a dict with format {category: (min, max)} specifying the bounds for UBI amounts
-                   for each category. If min == max, the amount is fixed.
-    - loss_metric = the type of loss metric to be used in optimization.
-    - reform = the type of reform to apply
-    - verbose = bool specifying whether or not to print each function evaluation
-    - **kwargs = kwargs for differential_evolution
-
-    Returns:
-    - return an OptimizeResult with the optimal solution.
-    - prints and output_dict with the optimal solution.
-    - prints the loss metrics for the optimal solution set.
+    :param input_dict: Dict with format {category: (min, max)} specifying the
+        bounds for UBI amounts for each category. If min == max, the amount is
+        fixed.
+    :type input_dict: dict
+    :param loss_metric: Type of loss metric to be used in optimization.
+    :type loss_metric: str
+    :param reform: Type of reform to apply.
+    :type reform: str
+    :param verbose: Bool specifying whether or not to print each function
+        evaluation, defaults to True
+    :type verbose: bool, optional
+    :param path: Path to FRS files, defaults to None in which case the files
+        are loaded via frs.load().
+    :type path: str, optional
+    :return: Tuple of OptimizeResult with the optimal solution and dict with
+        solution for each UBI component.
+        Also prints a dict with the optimal solution and loss metrics.
+    :rtype: tuple
     """
 
     # Declare categories
-    CATEGORIES = [
-        "senior",
-        "child",
-        "dis_1",
-        "dis_2",
-        "dis_3",
+    AGE_CATEGORIES = ["senior", "child"]
+    DIS_CATEGORIES = ["dis_base", "dis_severe", "dis_enhanced"]
+    REGIONS = [
         "NORTH_EAST",
         "NORTH_WEST",
         "YORKSHIRE",
@@ -44,22 +54,25 @@ def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
     ]
 
     # Set bounds according to chosen reform.
-    if reform == "reform_1":
-        bounds = [input_dict[i] for i in CATEGORIES[:2]]
-        bounds += [(0, 0)] * 14
-    elif reform == "reform_2":
-        bounds = [input_dict[i] for i in CATEGORIES[:5]]
-        bounds += [(0, 0)] * 11
-    elif reform == "reform_3":
-        bounds = [input_dict[i] for i in CATEGORIES]
+    ZERO = [(0, 0)]
+    bounds = [input_dict[i] for i in AGE_CATEGORIES]
+    if reform == "reform_1":  # Child/adult/senior only.
+        bounds += ZERO * (len(DIS_CATEGORIES) + len(REGIONS))
+    else:  # Add disability supplements to reforms 2 and 3.
+        bounds += [input_dict[i] for i in DIS_CATEGORIES]
+        if reform == "reform_2":
+            bounds += ZERO * len(REGIONS)
+        else:  # Reform 3.
+            bounds += [input_dict[i] for i in REGIONS[:-1]]
+            bounds += ZERO  # Last geo is a baseline.
 
-    baseline_df, reform_base_df, budget = get_data()
+    baseline_df, reform_base_df, budget = get_data(path=path)
 
     # Take the average value of each tuple to create array of starting values
     x = [((i[0] + i[1]) / 2) for i in bounds]
 
-    # Add in the adult amount key
-    CATEGORIES = ["adult"] + CATEGORIES
+    # Create full list (in order) of categories.
+    categories = ["adult"] + AGE_CATEGORIES + DIS_CATEGORIES + REGIONS
 
     def loss_func(x, args=(loss_metric)):
         loss_metric = args
@@ -70,20 +83,29 @@ def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
         ]
 
         if verbose:
-            senior, child, dis_1, dis_2, dis_3, regions = extract(x)
+            (
+                senior,
+                child,
+                dis_base,
+                dis_severe,
+                dis_enhanced,
+                regions,
+            ) = extract(x)
             adult_amount = get_adult_amount(
                 reform_base_df,
                 budget,
                 senior,
                 child,
-                dis_1,
-                dis_2,
-                dis_3,
+                dis_base,
+                dis_severe,
+                dis_enhanced,
                 regions,
                 individual=True,
             )
             x = np.insert(x, 0, adult_amount)
-            output_dict = {CATEGORIES[i]: x[i] for i in range(len(x))}
+            output_dict = {
+                categories[i]: x[i] for i in range(len(x))
+            }
 
             # Print loss and corresponding solution set
             print("Loss: {}".format(loss))
@@ -97,30 +119,39 @@ def optimize(input_dict, loss_metric, reform, verbose=True, **kwargs):
     loss_dict = loss_metrics(
         result.x, baseline_df, reform_base_df, budget
     ).to_dict()
-    print("Loss by all metrics:\n", loss_dict, "\n")
+    print("Loss by all metrics:\n", pd.Series(loss_dict).round(4), "\n")
 
     # Get adult amount
-    senior, child, dis_1, dis_2, dis_3, regions = extract(result.x)
+    senior, child, dis_base, dis_severe, dis_enhanced, regions = extract(
+        result.x
+    )
     adult_amount = get_adult_amount(
         reform_base_df,
         budget,
         senior,
         child,
-        dis_1,
-        dis_2,
-        dis_3,
+        dis_base,
+        dis_severe,
+        dis_enhanced,
         regions,
         individual=True,
     )
 
-    # Insert adult amount into optimal solution set
-    result.x = np.insert(result.x, 0, adult_amount)
+    # Construct pandas Series of optimal result and insert adult amount.
+    optimal_x = pd.Series(
+        np.insert(result.x, 0, adult_amount), index=categories
+    )
 
     # Print optimal loss
-    print("Optimal {}:".format(loss_metric), result.fun, "\n")
+    print("Optimal {}:".format(loss_metric), round(result.fun, 4), "\n")
 
-    # Print optimal solution output_dict
-    output_dict = {CATEGORIES[i]: result.x[i] for i in range(len(result.x))}
-    print("Optimal solution:\n", output_dict)
+    # Make geo supplements non-negative by shifting negatives to
+    # child/adult/senior base amounts.
+    min_region = min(optimal_x)
+    optimal_x.loc[AGE_CATEGORIES + ["adult"]] += min_region
+    optimal_x.loc[REGIONS] -= min_region
 
-    return result
+    # Print optimal solution.
+    print("Optimal solution:\n", optimal_x.round().astype(int))
+
+    return result, optimal_x

@@ -3,21 +3,27 @@ import pandas as pd
 import microdf as mdf
 
 # File in repo.
-from uk.py.calc_ubi import get_data, set_ubi
+from py.calc_ubi import get_data, set_ubi
 
 
-def extract(x):
+def extract(x: list) -> tuple:
     # Extract parameters and generate reform DataFrame.
-    senior, child, dis_1, dis_2, dis_3 = x[:5]
+    senior, child, dis_base, dis_severe, dis_enhanced = x[:5]
     regions = np.array(x[5:])
-    return senior, child, dis_1, dis_2, dis_3, regions
+    return senior, child, dis_base, dis_severe, dis_enhanced, regions
 
 
-def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
+def loss_metrics(
+    x: list,
+    baseline_df: pd.DataFrame,
+    reform_base_df: pd.DataFrame,
+    budget: int,
+) -> pd.Series:
     """Calculate each potential loss metric.
 
     :param x: List of optimization elements:
-        [senior, child, dis_1, dis_2, dis_3, region1, region2, ..., region12]
+        [senior, child, dis_base, dis_severe, dis_enhanced, region1, region2,
+         ..., region12]
     :type x: list
     :return: Series with five elements:
         loser_share: Share of the population who come out behind.
@@ -32,9 +38,16 @@ def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
             scenario, weighted by person weight at the household level.
     :rtype: pd.Series
     """
-    senior, child, dis_1, dis_2, dis_3, regions = extract(x)
+    senior, child, dis_base, dis_severe, dis_enhanced, regions = extract(x)
     reform_df = set_ubi(
-        reform_base_df, budget, senior, child, dis_1, dis_2, dis_3, regions
+        reform_base_df,
+        budget,
+        senior,
+        child,
+        dis_base,
+        dis_severe,
+        dis_enhanced,
+        regions,
     )
     # Calculate loss-related loss metrics.
     change = reform_df.household_net_income - baseline_df.household_net_income
@@ -53,7 +66,7 @@ def loss_metrics(x: list, baseline_df, reform_base_df, budget) -> pd.Series:
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.
     pwd2_weight = baseline_df.household_weight * (
-        baseline_df.is_disabled + baseline_df.people_in_household
+        baseline_df.is_disabled_for_ubi + baseline_df.people_in_household
     )
     total_pct_loss_pwd2 = np.sum(
         pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss]
