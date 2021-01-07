@@ -8,9 +8,9 @@ from py.calc_ubi import get_data, set_ubi
 
 def extract(x: list) -> tuple:
     # Extract parameters and generate reform DataFrame.
-    senior, child, dis_base, dis_severe, dis_enhanced = x[:5]
-    regions = np.array(x[5:])
-    return senior, child, dis_base, dis_severe, dis_enhanced, regions
+    senior, child, dis_base = x[:3]
+    regions = np.array(x[3:])
+    return senior, child, dis_base, regions
 
 
 def loss_metrics(
@@ -22,8 +22,7 @@ def loss_metrics(
     """Calculate each potential loss metric.
 
     :param x: List of optimization elements:
-        [senior, child, dis_base, dis_severe, dis_enhanced, region1, region2,
-         ..., region12]
+        [senior, child, dis_base, region1, region2, ..., region12]
     :type x: list
     :return: Series with five elements:
         loser_share: Share of the population who come out behind.
@@ -38,15 +37,13 @@ def loss_metrics(
             scenario, weighted by person weight at the household level.
     :rtype: pd.Series
     """
-    senior, child, dis_base, dis_severe, dis_enhanced, regions = extract(x)
+    senior, child, dis_base, regions = extract(x)
     reform_df = set_ubi(
         reform_base_df,
         budget,
         senior,
         child,
         dis_base,
-        dis_severe,
-        dis_enhanced,
         regions,
     )
     # Calculate loss-related loss metrics.
