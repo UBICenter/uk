@@ -37,7 +37,7 @@ def optimize(
 
     # Declare categories
     AGE_CATEGORIES = ["senior", "child"]
-    DIS_CATEGORIES = ["dis_base", "dis_severe", "dis_enhanced"]
+    DIS_CATEGORIES = ["dis_base"]
     REGIONS = [
         "NORTH_EAST",
         "NORTH_WEST",
@@ -87,8 +87,6 @@ def optimize(
                 senior,
                 child,
                 dis_base,
-                dis_severe,
-                dis_enhanced,
                 regions,
             ) = extract(x)
             adult_amount = get_adult_amount(
@@ -97,15 +95,11 @@ def optimize(
                 senior,
                 child,
                 dis_base,
-                dis_severe,
-                dis_enhanced,
                 regions,
                 individual=True,
             )
             x = np.insert(x, 0, adult_amount)
-            output_dict = {
-                categories[i]: x[i] for i in range(len(x))
-            }
+            output_dict = {categories[i]: x[i] for i in range(len(x))}
 
             # Print loss and corresponding solution set
             print("Loss: {}".format(loss))
@@ -122,17 +116,13 @@ def optimize(
     print("Loss by all metrics:\n", pd.Series(loss_dict).round(4), "\n")
 
     # Get adult amount
-    senior, child, dis_base, dis_severe, dis_enhanced, regions = extract(
-        result.x
-    )
+    senior, child, dis_base, regions = extract(result.x)
     adult_amount = get_adult_amount(
         reform_base_df,
         budget,
         senior,
         child,
         dis_base,
-        dis_severe,
-        dis_enhanced,
         regions,
         individual=True,
     )
