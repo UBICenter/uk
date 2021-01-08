@@ -1,0 +1,13 @@
+name: uk
+dependencies:
+- python
+- plotly
+- pandas
+- numpy
+- pip
+- pip:
+  - jupyter-book
+  - "git+https://github.com/PSLmodels/microdf.git"
+  - sphinxcontrib-bibtex==1.0.0
+  - "git+https://github.com/PSLmodels/openfisca-uk.git"
+  # - "git+https://github.com/nikhilwoodruff/openfisca-core.git"

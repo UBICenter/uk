@@ -1,0 +1,8 @@
+# Name homepage index.
+- file: index
+# Add other pages...
+# And put the UBI Center homepage at the bottom.
+- url: https://ubicenter.org
+  title: UBI Center home
+
+- file: uk_ft_ubi
