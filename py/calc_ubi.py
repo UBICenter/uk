@@ -2,8 +2,8 @@
 Example usage:
 
 baseline_df, base_reform_df, budget = get_data()
-ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, 0, 0, np.zeros((12)), verbose=True)
-
+ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, np.zeros((12)),
+                 verbose=True)
 """
 
 from openfisca_uk.tools.simulation import PopulationSim
@@ -44,8 +44,6 @@ BASELINE_COLS = [
     "is_child",
     "is_WA_adult",
     "is_disabled_for_ubi",
-    "is_severely_disabled_for_ubi",
-    "is_enhanced_disabled_for_ubi",
     "region",
     "household_weight",
     "household_net_income",
@@ -84,8 +82,6 @@ def ubi_reform(
     adult: float,
     child: float,
     dis_base: float,
-    dis_severe: float,
-    dis_enhanced: float,
     geo: np.array,
 ):
     """Create an OpenFisca-UK reform class.
@@ -96,10 +92,6 @@ def ubi_reform(
         child (float): Child UBI amount per week
         dis_base (float): Supplement per week for people claiming any
             disability benefit.
-        dis_severe (float): Supplement per week for people claiming any
-            medium-sized disability benefit.
-        dis_enhanced (float): Supplement per week for people claiming highest
-            value of any disability benefit.
         geo (ndarray): Numpy float array of 12 UK regional supplements per week
 
     Returns:
@@ -131,8 +123,6 @@ def ubi_reform(
                 + ubi_piece(adult, "is_WA_adult")
                 + ubi_piece(child, "is_child")
                 + ubi_piece(dis_base, "is_disabled_for_ubi")
-                + ubi_piece(dis_severe, "is_severely_disabled_for_ubi")
-                + ubi_piece(dis_enhanced, "is_enhanced_disabled_for_ubi")
                 + geo[person.household("region").astype(int)]
             )
 
@@ -210,7 +200,7 @@ def get_data(path=None):
     )
     baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
-    reform_no_ubi = ubi_reform(0, 0, 0, 0, 0, 0, np.array([0] * 12))
+    reform_no_ubi = ubi_reform(0, 0, 0, 0, np.array([0] * 12))
     reform_no_ubi_sim = PopulationSim(reform_no_ubi, frs_data=FRS_DATA)
     reform_base_df = calc2df(
         reform_no_ubi_sim, BASELINE_COLS, map_to="household"
@@ -231,8 +221,6 @@ def get_adult_amount(
     senior: float,
     child: float,
     dis_base: float,
-    dis_severe: float,
-    dis_enhanced: float,
     regions: np.array,
     verbose: bool = False,
     individual: bool = False,
@@ -241,28 +229,24 @@ def get_adult_amount(
     """Calculate budget-neutral UBI amounts per person.
 
     Args:
-        base_df (DataFrame): UBI tax reform household-level DataFrame
-        budget (float): Total budget for UBI spending
-        senior (float): Pensioner UBI amount per week
-        child (float): Child UBI amount per week
+        base_df (DataFrame): UBI tax reform household-level DataFrame.
+        budget (float): Total budget for UBI spending.
+        senior (float): Pensioner UBI amount per week.
+        child (float): Child UBI amount per week.
         dis_base (float): Supplement per week for people claiming any
             disability benefit.
-        dis_severe (float): Supplement per week for people claiming any
-            medium-sized disability benefit.
-        dis_enhanced (float): Supplement per week for people claiming highest
-            value of any disability benefit.
-        regions (ndarray): Numpy float array of 12 UK regional supplements per week
-        verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
+        regions (ndarray): Numpy float array of 12 UK regional supplements per
+            week.
+        verbose (bool, optional): Whether to print the calibrated adult UBI
+            amount. Defaults to False.
 
     Returns:
-        DataFrame: Reform household-level DataFrame
+        DataFrame: Reform household-level DataFrame.
     """
     basic_income = (
         base_df["is_SP_age"] * senior
         + base_df["is_child"] * child
         + base_df["is_disabled_for_ubi"] * dis_base
-        + base_df["is_severely_disabled_for_ubi"] * dis_severe
-        + base_df["is_enhanced_disabled_for_ubi"] * dis_enhanced
     ) * 52
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
@@ -270,10 +254,7 @@ def get_adult_amount(
             * base_df["people_in_household"]
             * 52
         )
-    total_cost = np.sum(
-        basic_income
-        * base_df["household_weight"]
-    )
+    total_cost = np.sum(basic_income * base_df["household_weight"])
     adult_amount = (budget - total_cost) / np.sum(
         base_df["is_WA_adult"] * base_df["household_weight"]
     )
@@ -293,23 +274,21 @@ def set_ubi(
     senior: float,
     child: float,
     dis_base: float,
-    dis_severe: float,
-    dis_enhanced: float,
     regions: np.array,
     verbose: bool = False,
 ):
     """Calculate budget-neutral UBI amounts per person.
 
     Args:
-        base_df (DataFrame): UBI tax reform household-level DataFrame
-        budget (float): Total budget for UBI spending
-        senior (float): Pensioner UBI amount per week
-        child (float): Child UBI amount per week
-        dis_base (float): Disabled (Equality Act+) supplement per week
-        dis_severe (float): Enhanced disabled supplement per week
-        dis_enhanced (float): Severely disabled supplement per week
-        regions (ndarray): Numpy float array of 12 UK regional supplements per week
-        verbose (bool, optional): Whether to print the calibrated adult UBI amount. Defaults to False.
+        base_df (DataFrame): UBI tax reform household-level DataFrame.
+        budget (float): Total budget for UBI spending.
+        senior (float): Pensioner UBI amount per week.
+        child (float): Child UBI amount per week.
+        dis_base (float): Disabled (Equality Act+) supplement per week.
+        regions (ndarray): Numpy float array of 12 UK regional supplements per
+            week.
+        verbose (bool, optional): Whether to print the calibrated adult UBI
+            amount. Defaults to False.
 
     Returns:
         DataFrame: Reform household-level DataFrame
@@ -320,8 +299,6 @@ def set_ubi(
         senior,
         child,
         dis_base,
-        dis_severe,
-        dis_enhanced,
         regions,
         pass_income=True,
         verbose=verbose,
