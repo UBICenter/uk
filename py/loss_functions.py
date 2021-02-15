@@ -58,7 +58,9 @@ def loss_metrics(
     losses = np.sum(weight * loss)
     # Calculate average percent loss (including zero for non-losers).
     pct_loss = loss / baseline_df.household_net_income
-    valid_pct_loss = np.isfinite(pct_loss)
+    # Avoid infinite percent changes and backward changes due to negative
+    # baseline income.
+    valid_pct_loss = baseline_df.household_net_income > 0
     total_pct_loss = np.sum(weight[valid_pct_loss] * pct_loss[valid_pct_loss])
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.

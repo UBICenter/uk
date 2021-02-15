@@ -1,5 +1,6 @@
 from openfisca_uk import PopulationSim, IndividualSim
 from openfisca_uk.reforms.modelling import reported_benefits
+import numpy as np
 import pandas as pd
 import microdf as mdf
 from py.calc_ubi import ubi_reform
@@ -107,9 +108,13 @@ def get_dfs():
 
     def chg(df, col):
         df[col + "_chg"] = df[col] - df[col + "_base"]
-        # Percentage change.
-        df[col + "_pc"] = df[col + "_chg"] / df[col + "_base"]
-        # Percentage loss.
+        # Percentage change, only defined for positive baselines.
+        df[col + "_pc"] = np.where(
+            df[col + "_base"] > 0,
+            df[col + "_chg"] / df[col + "_base"],
+            np.nan,
+        )
+        # Percentage loss. NB: np.minimum(np.nan, 0) -> np.nan.
         df[col + "_pl"] = np.minimum(0, df[col + "_pc"])
 
     chg(p_all, "household_net_income")
