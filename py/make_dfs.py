@@ -40,7 +40,7 @@ reforms = [reform(i) for i in range(3)]
 baseline_sim = PopulationSim(reported_benefits)
 reform_sims = [PopulationSim(reported_benefits, reform) for reform in reforms]
 
-REFORM_NAMES = ["Foundational", "Disability", "Disability + geo"]
+REFORM_NAMES = ["1: Foundational", "2: Disability", "3: Disability + geo"]
 
 BASELINE_PERSON_COLS = [
     "household_weight",
@@ -100,7 +100,18 @@ def reform_hh(i):
 
 def get_dfs():
     p_all = pd.concat([reform_p(i) for i in range(3)])
+    hh_all = pd.concat([reform_hh(i) for i in range(3)])
+
+    # Process.
     p_all["region_name"] = p_all.region.map(region_map)
 
-    hh_all = pd.concat([reform_hh(i) for i in range(3)])
+    def chg(df, col):
+        df[col + "_chg"] = df[col] - df[col + "_base"]
+        # Percentage change.
+        df[col + "_pc"] = df[col + "_chg"] / df[col + "_base"]
+        # Percentage loss.
+        df[col + "_pl"] = np.minimum(0, df[col + "_pc"])
+
+    chg(p_all, "household_net_income")
+    chg(hh_all, "household_net_income")
     return p_all, hh_all
