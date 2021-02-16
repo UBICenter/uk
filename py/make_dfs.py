@@ -145,13 +145,12 @@ def get_dfs():
         ]
     )
     # Per reform per decile (by household).
-    decile = (
-        hh_all.groupby(["reform", "equiv_household_net_income_base_decile"])[
-            "household_net_income_base", "household_net_income"
-        ]
-        .sum()
-        .reset_index()
-    )
+    decile = mdf.weighted_sum(
+        hh_all,
+        ["household_net_income_base", "household_net_income"],
+        "household_weight",
+        groupby=["reform", "equiv_household_net_income_base_decile"],
+    ).reset_index()
     decile["pc"] = (
         decile.household_net_income / decile.household_net_income_base - 1
     )
