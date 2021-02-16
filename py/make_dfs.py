@@ -152,4 +152,7 @@ def get_dfs():
         .sum()
         .reset_index()
     )
-    return p_all, hh_all, decile
+    decile["pc"] = (
+        decile.household_net_income / decile.household_net_income_base - 1
+    )
+    return p_all, hh_all, reform_df, decile
