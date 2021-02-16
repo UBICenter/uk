@@ -59,6 +59,8 @@ BASELINE_HH_COLS = [
     "poverty_gap_bhc",
     "poverty_gap_ahc",
     "household_net_income",
+    "equiv_household_net_income",
+    "people_in_household",
 ]
 
 REFORM_PERSON_COLS = ["basic_income", "household_net_income"]
@@ -76,14 +78,23 @@ p_base.rename(
 )
 
 hh_base = baseline_sim.df(BASELINE_HH_COLS, map_to="household")
+# TODO: Do this without hard-coding.
+# TODO: Add persons to calculate person weight.
 hh_base.rename(
     {
         "household_net_income": "household_net_income_base",
+        "equiv_household_net_income": "equiv_household_net_income_base",
         "poverty_gap_bhc": "poverty_gap_bhc_base",
         "poverty_gap_ahc": "poverty_gap_ahc_base",
     },
     axis=1,
     inplace=True,
+)
+hh_base["person_weight"] = (
+    hh_base.household_weight * hh_base.people_in_household
+)
+mdf.add_weighted_quantiles(
+    hh_base, "equiv_household_net_income_base", "person_weight"
 )
 
 
@@ -119,4 +130,26 @@ def get_dfs():
 
     chg(p_all, "household_net_income")
     chg(hh_all, "household_net_income")
-    return p_all, hh_all
+    p_all["winner"] = p_all.household_net_income_chg > 0
+    hh_all["winner"] = hh_all.household_net_income_chg > 0
+    # Per-reform.
+    reform_df = pd.concat(
+        [
+            mdf.weighted_mean(
+                p_all,
+                ["household_net_income_pl", "winner"],
+                "household_weight",
+                groupby="reform",
+            ),
+            # mdf.gini(p, ""),
+        ]
+    )
+    # Per reform per decile (by household).
+    decile = (
+        hh_all.groupby(["reform", "equiv_household_net_income_base_decile"])[
+            "household_net_income_base", "household_net_income"
+        ]
+        .sum()
+        .reset_index()
+    )
+    return p_all, hh_all, decile
