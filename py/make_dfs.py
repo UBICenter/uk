@@ -166,7 +166,7 @@ def get_dfs():
     r = p_agg.merge(gini_base, on="reform").merge(gini_reform, on="reform")
     r["gini_chg"] = pct_chg(r.gini_base, r.gini_reform)
     # Per reform per decile (by household).
-    
+
     decile = (
         h.groupby(["reform", "equiv_household_net_income_base_decile"])[
             ["household_net_income_base", "household_net_income"]
