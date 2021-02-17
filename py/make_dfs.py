@@ -65,7 +65,12 @@ BASELINE_HH_COLS = [
 
 REFORM_PERSON_COLS = ["basic_income", "household_net_income"]
 
-REFORM_HH_COLS = ["household_net_income", "poverty_gap_bhc", "poverty_gap_ahc"]
+REFORM_HH_COLS = [
+    "household_net_income",
+    "equiv_household_net_income",
+    "poverty_gap_bhc",
+    "poverty_gap_ahc",
+]
 
 p_base = baseline_sim.df(BASELINE_PERSON_COLS, map_to="person")
 p_base.rename(
@@ -110,12 +115,20 @@ def reform_hh(i):
     return pd.concat([hh, hh_base], axis=1)
 
 
+def pct_chg(base, new):
+    return (new - base) / base
+
+
 def get_dfs():
-    p_all = pd.concat([reform_p(i) for i in range(3)])
-    hh_all = pd.concat([reform_hh(i) for i in range(3)])
+    p = mdf.MicroDataFrame(
+        pd.concat([reform_p(i) for i in range(3)]), weights="household_weight"
+    )
+    h = mdf.MicroDataFrame(
+        pd.concat([reform_hh(i) for i in range(3)]), weights="household_weight"
+    )
 
     # Process.
-    p_all["region_name"] = p_all.region.map(region_map)
+    p["region_name"] = p.region.map(region_map)
 
     def chg(df, col):
         df[col + "_chg"] = df[col] - df[col + "_base"]
@@ -128,30 +141,40 @@ def get_dfs():
         # Percentage loss. NB: np.minimum(np.nan, 0) -> np.nan.
         df[col + "_pl"] = np.minimum(0, df[col + "_pc"])
 
-    chg(p_all, "household_net_income")
-    chg(hh_all, "household_net_income")
-    p_all["winner"] = p_all.household_net_income_chg > 0
-    hh_all["winner"] = hh_all.household_net_income_chg > 0
+    chg(p, "household_net_income")
+    chg(h, "household_net_income")
+    p["winner"] = p.household_net_income_chg > 0
+    h["winner"] = h.household_net_income_chg > 0
     # Per-reform.
-    reform_df = pd.concat(
-        [
-            mdf.weighted_mean(
-                p_all,
-                ["household_net_income_pl", "winner"],
-                "household_weight",
-                groupby="reform",
-            ),
-            # mdf.gini(p, ""),
-        ]
+    gini_base = (
+        h.groupby("reform")
+        .equiv_household_net_income_base.gini()
+        .reset_index()
+        .rename({0: "gini_base"}, axis=1)
     )
+    gini_reform = (
+        h.groupby("reform")
+        .equiv_household_net_income.gini()
+        .reset_index()
+        .rename({0: "gini_reform"}, axis=1)
+    )
+    p_agg = (
+        p.groupby("reform")[["household_net_income_pl", "winner"]]
+        .mean()
+        .reset_index()
+    )
+    r = p_agg.merge(gini_base, on="reform").merge(gini_reform, on="reform")
+    r["gini_chg"] = pct_chg(r.gini_base, r.gini_reform)
     # Per reform per decile (by household).
-    decile = mdf.weighted_sum(
-        hh_all,
-        ["household_net_income_base", "household_net_income"],
-        "household_weight",
-        groupby=["reform", "equiv_household_net_income_base_decile"],
-    ).reset_index()
+    
+    decile = (
+        h.groupby(["reform", "equiv_household_net_income_base_decile"])[
+            ["household_net_income_base", "household_net_income"]
+        ]
+        .sum()
+        .reset_index()
+    )
     decile["pc"] = (
         decile.household_net_income / decile.household_net_income_base - 1
     )
-    return p_all, hh_all, reform_df, decile
+    return p, h, r, decile
