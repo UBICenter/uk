@@ -72,7 +72,7 @@ REFORM_HH_COLS = [
     "poverty_gap_ahc",
 ]
 
-p_base = baseline_sim.df(BASELINE_PERSON_COLS, map_to="person")
+p_base = mdf.MicroDataFrame(baseline_sim.df(BASELINE_PERSON_COLS, map_to="person"), weights="household_weight")
 p_base.rename(
     {
         "household_net_income": "household_net_income_base",
@@ -82,7 +82,7 @@ p_base.rename(
     inplace=True,
 )
 
-hh_base = baseline_sim.df(BASELINE_HH_COLS, map_to="household")
+hh_base = mdf.MicroDataFrame(baseline_sim.df(BASELINE_HH_COLS, map_to="household"), weights="household_weight")
 # TODO: Do this without hard-coding.
 # TODO: Add persons to calculate person weight.
 hh_base.rename(
@@ -98,34 +98,39 @@ hh_base.rename(
 hh_base["person_weight"] = (
     hh_base.household_weight * hh_base.people_in_household
 )
-mdf.add_weighted_quantiles(
-    hh_base, "equiv_household_net_income_base", "person_weight"
-)
+# mdf.add_weighted_quantiles(
+#     # Cast to pd.DataFrame because it might not currently work with mdf.
+#     pd.DataFrame(hh_base), "equiv_household_net_income_base", "person_weight"
+# )
 
 
 def reform_p(i):
     p = reform_sims[i].df(REFORM_PERSON_COLS, map_to="person")
     p["reform"] = REFORM_NAMES[i]
-    return pd.concat([p, p_base], axis=1)
+    return mdf.concat([p_base, p], axis=1)
 
 
 def reform_hh(i):
     hh = reform_sims[i].df(REFORM_HH_COLS, map_to="household")
     hh["reform"] = REFORM_NAMES[i]
-    return pd.concat([hh, hh_base], axis=1)
+    return mdf.concat([hh_base, hh], axis=1)
 
 
 def pct_chg(base, new):
     return (new - base) / base
 
 
+def reform_stats(df):
+    # For applying over a groupby(reform) or a .
+    gini = df.equiv_household_net_income_base.aggregate(
+        ["gini", "top_10pct_share"]
+    )
+    p_agg = df[["household_net_income_pl", "winner"]].mean()
+
+
 def get_dfs():
-    p = mdf.MicroDataFrame(
-        pd.concat([reform_p(i) for i in range(3)]), weights="household_weight"
-    )
-    h = mdf.MicroDataFrame(
-        pd.concat([reform_hh(i) for i in range(3)]), weights="household_weight"
-    )
+    p = mdf.concat([reform_p(i) for i in range(3)])
+    h = mdf.concat([reform_hh(i) for i in range(3)])
 
     # Process.
     p["region_name"] = p.region.map(region_map)
@@ -146,35 +151,33 @@ def get_dfs():
     p["winner"] = p.household_net_income_chg > 0
     h["winner"] = h.household_net_income_chg > 0
     # Per-reform.
-    gini_base = (
-        h.groupby("reform")
-        .equiv_household_net_income_base.gini()
-        .reset_index()
-        .rename({0: "gini_base"}, axis=1)
-    )
-    gini_reform = (
-        h.groupby("reform")
-        .equiv_household_net_income.gini()
-        .reset_index()
-        .rename({0: "gini_reform"}, axis=1)
-    )
-    p_agg = (
-        p.groupby("reform")[["household_net_income_pl", "winner"]]
-        .mean()
-        .reset_index()
-    )
-    r = p_agg.merge(gini_base, on="reform").merge(gini_reform, on="reform")
-    r["gini_chg"] = pct_chg(r.gini_base, r.gini_reform)
+    INEQS = ["gini", "top_10_pct_share", "top_1_pct_share"]
+    ineq_base = h.groupby("reform").equiv_household_net_income_base.agg(INEQS)
+    ineq_base.columns = [i + "_base" for i in ineq_base.columns]
+    ineq_reform = h.groupby("reform").equiv_household_net_income.agg(INEQS)
+    ineq_reform.columns = [i + "_reform" for i in ineq_reform.columns]
+    p_agg = p.groupby("reform")[["household_net_income_pl", "winner"]].mean()
+    r = p_agg.join(ineq_base).join(ineq_reform, on="reform")
+    r["reform"] = reform.index  # Easier for plotting.
+    for i in INEQS:
+        r[i + "_pc"] = pct_chg(r[i + "_base"], r[i + "_reform"])
+    
     # Per reform per decile (by household).
 
-    decile = (
-        h.groupby(["reform", "equiv_household_net_income_base_decile"])[
-            ["household_net_income_base", "household_net_income"]
-        ]
-        .sum()
-        .reset_index()
-    )
-    decile["pc"] = (
-        decile.household_net_income / decile.household_net_income_base - 1
-    )
-    return p, h, r, decile
+    # decile = (
+    #     h.groupby(["reform", "equiv_household_net_income_base_decile"])[
+    #         [
+    #             "household_net_income_base",
+    #             "household_net_income",
+    #             "household_weight",
+    #         ]
+    #     ]
+    #     .sum()
+    #     .reset_index()
+    # )
+    # decile["chg"] = (
+    #     decile.household_net_income - decile.household_net_income_base
+    # )
+    # decile["chg_per_hh"] = decile.chg / decile.household_weight
+    # decile["pc"] = decile.chg / decile.household_net_income_base
+    return p, h, r#, decile
