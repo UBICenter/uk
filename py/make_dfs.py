@@ -4,7 +4,7 @@ import openfisca_uk as o
 import pandas as pd
 from openfisca_uk import IndividualSim, PopulationSim
 from openfisca_uk.reforms.modelling import reported_benefits
-from py.calc_ubi import ubi_reform
+from calc_ubi import ubi_reform
 
 REGION_CODES = [
     "NORTH_EAST",
@@ -39,7 +39,7 @@ REGION_NAMES = [
 region_code_map = dict(zip(range(len(REGION_CODES)), REGION_CODES))
 region_name_map = dict(zip(range(len(REGION_NAMES)), REGION_NAMES))
 
-optimal_params = pd.read_csv("optimal_params.csv")  # Up a folder.
+optimal_params = pd.read_csv("../optimal_params.csv")  # Up a folder.
 
 
 def reform(i):
@@ -141,14 +141,6 @@ def pct_chg(base, new):
     return (new - base) / base
 
 
-def reform_stats(df):
-    # For applying over a groupby(reform) or a .
-    gini = df.equiv_household_net_income_base.aggregate(
-        ["gini", "top_10pct_share"]
-    )
-    p_agg = df[["household_net_income_pl", "winner"]].mean()
-
-
 def get_dfs():
     p = mdf.concat([reform_p(i) for i in range(3)])
     h = mdf.concat([reform_hh(i) for i in range(3)])
@@ -171,37 +163,4 @@ def get_dfs():
     chg(h, "household_net_income")
     p["winner"] = p.household_net_income_chg > 0
     h["winner"] = h.household_net_income_chg > 0
-    # Per-reform.
-    INEQS = ["gini", "top_10_pct_share", "top_1_pct_share"]
-    ineq_base = h.groupby("reform").equiv_household_net_income_base.agg(INEQS)
-    ineq_base.columns = [i + "_base" for i in ineq_base.columns]
-    ineq_reform = h.groupby("reform").equiv_household_net_income.agg(INEQS)
-    ineq_reform.columns = [i + "_reform" for i in ineq_reform.columns]
-    p_agg = p.groupby("reform")[["household_net_income_pl", "winner"]].mean()
-    r = p_agg.join(ineq_base).join(ineq_reform, on="reform")
-    r["reform"] = r.index  # Easier for plotting.
-    for i in INEQS:
-        r[i + "_pc"] = pct_chg(r[i + "_base"], r[i + "_reform"])
-
-    # Per reform per decile (by household).
-
-    decile = (
-        h[
-            [
-                "reform",
-                "decile",
-                "household_net_income",
-                "household_net_income_base",
-                "people_in_household",
-            ]
-        ]
-        .groupby(["reform", "decile"])
-        .sum()
-        .reset_index()
-    )
-    decile["chg"] = (
-        decile.household_net_income - decile.household_net_income_base
-    )
-    decile["chg_pp"] = decile.chg / decile.people_in_household
-    decile["pc"] = decile.chg / decile.household_net_income_base
-    return p, h, r, decile
+    return p, h
