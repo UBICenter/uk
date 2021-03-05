@@ -40,7 +40,7 @@ region_code_map = dict(zip(range(len(REGION_CODES)), REGION_CODES))
 region_name_map = dict(zip(range(len(REGION_NAMES)), REGION_NAMES))
 
 optimal_params = pd.read_csv("../optimal_params.csv"
-)  # .round()  # Up a folder.
+).round()  # Up a folder.
 
 
 def reform(i):
