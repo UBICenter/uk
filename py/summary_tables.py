@@ -88,6 +88,48 @@ pov["deep_pov_chg"] = (
 )
 pov_chg_long = pov.melt(["reform", "age_group"], ["pov_chg", "deep_pov_chg"])
 
+# Within-decile.
+BUCKETS = [
+    "Lose more than 5%",
+    "Lose less than 5%",
+    "Gain less than 5%",
+    "Gain more than 5%",
+]
+h["household_net_income_pc_group"] = pd.cut(
+    h.household_net_income_pc,
+    [-np.inf, -0.05, 0, 0.05, np.inf],
+    labels=BUCKETS,
+)
+
+
+def group(groupby, name="people_in_household"):
+    return (
+        h[h.household_net_income_base > 0]
+        .groupby(groupby)
+        .people_in_household.sum()
+        .reset_index()
+        .rename({0: name}, axis=1)
+    )
+
+
+chg_bucket = group(["reform", "decile", "household_net_income_pc_group"])
+chg_bucket_decile_total = group(
+    ["reform", "decile"], "total_people_in_household"
+)
+chg_bucket_total = group(["reform", "household_net_income_pc_group"])
+reform_total = group("reform")
+# Calculate share of decile.
+chg_bucket = chg_bucket.merge(chg_bucket_decile_total, on=["reform", "decile"])
+chg_bucket["share_of_decile"] = (
+    chg_bucket.people_in_household / chg_bucket.total_people_in_household
+)
+
+# Sort for correct stack order.
+chg_bucket["order"] = chg_bucket.household_net_income_pc_group.map(
+    dict(zip(BUCKETS, range(len(BUCKETS))))
+)
+chg_bucket.sort_values("order", ascending=False, inplace=True)
+
 # Export.
 
 
@@ -100,3 +142,4 @@ csv(region_r, "region_reform")
 csv(decile, "decile")
 csv(cur_pov_long, "cur_pov_long")
 csv(pov_chg_long, "pov_chg_long")
+csv(chg_bucket, "within_decile")
