@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import differential_evolution, OptimizeResult
-from py.loss_functions import loss_metrics, extract
-from py.calc_ubi import get_data, get_adult_amount
+from loss_functions import loss_metrics, extract
+from calc_ubi import get_data, get_adult_amount
 
 
 def optimize(

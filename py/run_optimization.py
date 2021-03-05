@@ -5,8 +5,8 @@ import os
 if 'py' not in os.listdir("."):
     os.chdir("..")
 
-from py.loss_functions import loss_metrics
-from py.optimize import optimize
+from loss_functions import loss_metrics
+from optimize import optimize
 
 import pandas as pd
 

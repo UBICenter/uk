@@ -3,7 +3,7 @@ import pandas as pd
 import microdf as mdf
 
 # File in repo.
-from py.calc_ubi import get_data, set_ubi
+from calc_ubi import get_data, set_ubi
 
 
 def extract(x: list) -> tuple:
@@ -39,15 +39,10 @@ def loss_metrics(
     """
     senior, child, dis_base, regions = extract(x)
     reform_df = set_ubi(
-        reform_base_df,
-        budget,
-        senior,
-        child,
-        dis_base,
-        regions,
+        reform_base_df, budget, senior, child, dis_base, regions,
     )
     # Calculate loss-related loss metrics.
-    change = reform_df.household_net_income - baseline_df.household_net_income
+    change = reform_df.net_income - baseline_df.net_income
     loss = np.maximum(-change, 0)
     weight = baseline_df.household_weight * baseline_df.people_in_household
     # Calculate loser share.
@@ -57,10 +52,10 @@ def loss_metrics(
     # Calculate total losses in pounds.
     losses = np.sum(weight * loss)
     # Calculate average percent loss (including zero for non-losers).
-    pct_loss = loss / baseline_df.household_net_income
+    pct_loss = loss / baseline_df.net_income
     # Avoid infinite percent changes and backward changes due to negative
     # baseline income.
-    valid_pct_loss = baseline_df.household_net_income > 0
+    valid_pct_loss = baseline_df.net_income > 0
     total_pct_loss = np.sum(weight[valid_pct_loss] * pct_loss[valid_pct_loss])
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.
@@ -74,7 +69,7 @@ def loss_metrics(
     mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
     # Gini of income per person.
     reform_hh_net_income_pp = (
-        reform_df.household_net_income / baseline_df.people_in_household
+        reform_df.net_income / baseline_df.people_in_household
     )
     # mdf.gini requires a dataframe.
     reform_df = pd.DataFrame(

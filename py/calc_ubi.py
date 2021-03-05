@@ -25,11 +25,9 @@ BASELINE_COLS = [
     "is_disabled_for_ubi",
     "region",
     "household_weight",
-    "household_net_income",
-    "household_net_income_ahc",
+    "net_income",
     "people_in_household",
     "household_equivalisation_bhc",
-    "household_equivalisation_ahc",
 ]
 
 CORE_BENEFITS = [
@@ -183,8 +181,8 @@ def get_data(path=None):
     budget = -np.sum(
         baseline.calc("household_weight")
         * (
-            reform_no_ubi_sim.calc("household_net_income")
-            - baseline.calc("household_net_income")
+            reform_no_ubi_sim.calc("net_income", map_to="household")
+            - baseline.calc("net_income", map_to="household")
         )
     )
     return baseline_df, reform_base_df, budget
@@ -222,23 +220,23 @@ def get_adult_amount(
         base_df["age_over_64"] * senior
         + base_df["age_under_18"] * child
         + base_df["is_disabled_for_ubi"] * dis_base
-    ) * 52
+    ) * 53
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
             np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
             * base_df["people_in_household"]
-            * 52
+            * 53
         )
     total_cost = np.sum(basic_income * base_df["household_weight"])
     adult_amount = (budget - total_cost) / np.sum(
         base_df["age_18_64"] * base_df["household_weight"]
     )
     if verbose:
-        print(f"Adult amount: {gbp(adult_amount / 52)}/week")
+        print(f"Adult amount: {gbp(adult_amount / 53)}/week")
     if pass_income:
         return basic_income, adult_amount
     if individual:
-        return adult_amount / 52
+        return adult_amount / 53
     else:
         return adult_amount
 
@@ -281,6 +279,5 @@ def set_ubi(
     basic_income += base_df["age_18_64"] * adult_amount
     reform_df = base_df.copy(deep=True)
     reform_df["basic_income"] = basic_income
-    reform_df["household_net_income"] += basic_income
-    reform_df["household_net_income_ahc"] += basic_income
+    reform_df["net_income"] += basic_income
     return reform_df

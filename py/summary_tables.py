@@ -58,7 +58,7 @@ decile = (
     )
 ).reset_index()
 decile["chg"] = decile.household_net_income - decile.household_net_income_base
-decile["weekly_chg_pp"] = (decile.chg / decile.people_in_household) / 52
+decile["weekly_chg_pp"] = (decile.chg / decile.people_in_household) / 53
 
 
 G = ["reform", "region_name"]
@@ -135,6 +135,10 @@ chg_bucket["order"] = chg_bucket.household_net_income_pc_group.map(
     dict(zip(BUCKETS, range(len(BUCKETS))))
 )
 chg_bucket.sort_values("order", ascending=False, inplace=True)
+
+# Poverty by demographic.
+
+
 
 # Export.
 def csv(df, f):
