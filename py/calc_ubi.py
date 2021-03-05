@@ -40,9 +40,9 @@ def calc2df(
 
 BASELINE_COLS = [
     "household_id",
-    "is_SP_age",
-    "is_child",
-    "is_WA_adult",
+    "age_over_64",
+    "age_under_18",
+    "age_18_64",
     "is_disabled_for_ubi",
     "region",
     "household_weight",
@@ -119,9 +119,9 @@ def ubi_reform(
 
             region = person.household("region", period)
             return (
-                ubi_piece(senior, "is_SP_age")
-                + ubi_piece(adult, "is_WA_adult")
-                + ubi_piece(child, "is_child")
+                ubi_piece(senior, "age_over_64")
+                + ubi_piece(adult, "age_18_64")
+                + ubi_piece(child, "age_under_18")
                 + ubi_piece(dis_base, "is_disabled_for_ubi")
                 + geo[person.household("region").astype(int)]
             )
@@ -244,8 +244,8 @@ def get_adult_amount(
         DataFrame: Reform household-level DataFrame.
     """
     basic_income = (
-        base_df["is_SP_age"] * senior
-        + base_df["is_child"] * child
+        base_df["age_over_64"] * senior
+        + base_df["age_under_18"] * child
         + base_df["is_disabled_for_ubi"] * dis_base
     ) * 52
     for i, region_name in zip(range(len(regions)), REGIONS):
@@ -256,7 +256,7 @@ def get_adult_amount(
         )
     total_cost = np.sum(basic_income * base_df["household_weight"])
     adult_amount = (budget - total_cost) / np.sum(
-        base_df["is_WA_adult"] * base_df["household_weight"]
+        base_df["age_18_64"] * base_df["household_weight"]
     )
     if verbose:
         print(f"Adult amount: {gbp(adult_amount / 52)}/week")
@@ -303,7 +303,7 @@ def set_ubi(
         pass_income=True,
         verbose=verbose,
     )
-    basic_income += base_df["is_WA_adult"] * adult_amount
+    basic_income += base_df["age_18_64"] * adult_amount
     reform_df = base_df.copy(deep=True)
     reform_df["basic_income"] = basic_income
     reform_df["household_net_income"] += basic_income
