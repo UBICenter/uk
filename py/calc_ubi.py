@@ -17,27 +17,6 @@ from openfisca_uk.entities import *
 from openfisca_uk.reforms.modelling import reported_benefits
 
 
-def calc2df(
-    sim: PopulationSim, cols: list, map_to: str = "person"
-) -> pd.DataFrame:
-    """Make a DataFrame from an openfisca-uk PopulationSim.
-
-    :param sim: PopulationSim object to extract from.
-    :type sim: PopulationSim
-    :param cols: List of simulation attributes.
-    :type cols: list
-    :param map_to: Entity type to return: 'person', 'benunit', or 'household'.
-        Defaults to 'person'.
-    :type map_to: str, optional
-    :return: DataFrame with each attribute of sim as a column.
-    :rtype: pd.DataFrame
-    """
-    d = {}
-    for i in cols:
-        d[i] = sim.calc(i, map_to=map_to)
-    return pd.DataFrame(d)
-
-
 BASELINE_COLS = [
     "household_id",
     "age_over_64",
@@ -194,15 +173,13 @@ def get_data(path=None):
     baseline = PopulationSim(
         reported_benefits, frs_data=(person, benunit, household)
     )
-    baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
+    baseline_df = baseline.df(BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, np.array([0] * 12))
     reform_no_ubi_sim = PopulationSim(
         reported_benefits, reform_no_ubi, frs_data=FRS_DATA
     )
-    reform_base_df = calc2df(
-        reform_no_ubi_sim, BASELINE_COLS, map_to="household"
-    )
+    reform_base_df = reform_no_ubi_sim.df(BASELINE_COLS, map_to="household")
     budget = -np.sum(
         baseline.calc("household_weight")
         * (
