@@ -39,7 +39,8 @@ REGION_NAMES = [
 region_code_map = dict(zip(range(len(REGION_CODES)), REGION_CODES))
 region_name_map = dict(zip(range(len(REGION_NAMES)), REGION_NAMES))
 
-optimal_params = pd.read_csv("../optimal_params.csv").round()  # Up a folder.
+optimal_params = pd.read_csv("../optimal_params.csv"
+)  # .round()  # Up a folder.
 
 
 def reform(i):
@@ -119,6 +120,13 @@ p_base["region_name"] = p_base.region.map(region_name_map)
 hh_base.set_weights(hh_base.person_weight)
 hh_base["decile"] = np.ceil(
     hh_base.equiv_household_net_income_base.rank(pct=True) * 10
+)
+# Set decile for households with nonpositive income to zero.
+# These will be excluded from graphs.
+hh_base.decile = np.where(
+    hh_base.household_net_income_base > 0,
+    hh_base.decile,
+    np.where(hh_base.household_net_income_base == 0, 0, -1),
 )
 
 # Change weight back to household weight for correct calculation of totals.
