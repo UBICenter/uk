@@ -220,23 +220,23 @@ def get_adult_amount(
         base_df["age_over_64"] * senior
         + base_df["age_under_18"] * child
         + base_df["is_disabled_for_ubi"] * dis_base
-    ) * 53
+    ) * 52
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
             np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
             * base_df["people_in_household"]
-            * 53
+            * 52
         )
     total_cost = np.sum(basic_income * base_df["household_weight"])
     adult_amount = (budget - total_cost) / np.sum(
         base_df["age_18_64"] * base_df["household_weight"]
     )
     if verbose:
-        print(f"Adult amount: {gbp(adult_amount / 53)}/week")
+        print(f"Adult amount: {gbp(adult_amount / 52)}/week")
     if pass_income:
         return basic_income, adult_amount
     if individual:
-        return adult_amount / 53
+        return adult_amount / 52
     else:
         return adult_amount
 
