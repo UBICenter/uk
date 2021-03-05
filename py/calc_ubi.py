@@ -78,11 +78,7 @@ CORE_BENEFITS = [
 
 
 def ubi_reform(
-    senior: float,
-    adult: float,
-    child: float,
-    dis_base: float,
-    geo: np.array,
+    senior: float, adult: float, child: float, dis_base: float, geo: np.array,
 ):
     """Create an OpenFisca-UK reform class.
 
@@ -201,7 +197,9 @@ def get_data(path=None):
     baseline_df = calc2df(baseline, BASELINE_COLS, map_to="household")
     FRS_DATA = (person, benunit, household)
     reform_no_ubi = ubi_reform(0, 0, 0, 0, np.array([0] * 12))
-    reform_no_ubi_sim = PopulationSim(reform_no_ubi, frs_data=FRS_DATA)
+    reform_no_ubi_sim = PopulationSim(
+        reported_benefits, reform_no_ubi, frs_data=FRS_DATA
+    )
     reform_base_df = calc2df(
         reform_no_ubi_sim, BASELINE_COLS, map_to="household"
     )
