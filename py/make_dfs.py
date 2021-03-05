@@ -6,7 +6,7 @@ from openfisca_uk import IndividualSim, PopulationSim
 from openfisca_uk.reforms.modelling import reported_benefits
 from py.calc_ubi import ubi_reform
 
-REGIONS = [
+REGION_CODES = [
     "NORTH_EAST",
     "NORTH_WEST",
     "YORKSHIRE",
@@ -21,7 +21,23 @@ REGIONS = [
     "NORTHERN_IRELAND",
 ]
 
-region_map = dict(zip(range(len(REGIONS)), REGIONS))
+REGION_NAMES = [
+    "North East",
+    "North West",
+    "Yorkshire and the Humber",
+    "East Midlands",
+    "West Midlands",
+    "East of England",
+    "London",
+    "South East",
+    "South West",
+    "Wales",
+    "Scotland",
+    "Northern Ireland",
+]
+
+region_code_map = dict(zip(range(len(REGION_CODES)), REGION_CODES))
+region_name_map = dict(zip(range(len(REGION_NAMES)), REGION_NAMES))
 
 optimal_params = pd.read_csv("optimal_params.csv")  # Up a folder.
 
@@ -33,7 +49,7 @@ def reform(i):
         child=row.child,
         senior=row.senior,
         dis_base=row.dis_base,
-        geo=row[REGIONS],
+        geo=row[REGION_CODES],
     )
 
 
@@ -58,12 +74,7 @@ REFORM_PERSON_COLS = [
     "in_deep_poverty_bhc",
 ]
 
-BASELINE_HH_COLS = [
-    "household_weight",
-    "poverty_gap_bhc",
-    "poverty_gap_ahc",
-    "people_in_household",
-]
+BASELINE_HH_COLS = ["household_weight", "people_in_household", "region"]
 
 # Extract these for baseline too.
 REFORM_HH_COLS = [
@@ -97,6 +108,12 @@ hh_base.rename(
 hh_base["person_weight"] = (
     hh_base.household_weight * hh_base.people_in_household
 )
+
+# Add region code and names
+hh_base["region_code"] = hh_base.region.map(region_code_map)
+hh_base["region_name"] = hh_base.region.map(region_name_map)
+p_base["region_code"] = p_base.region.map(region_code_map)
+p_base["region_name"] = p_base.region.map(region_name_map)
 
 # Change weight column to represent people for decile groups.
 hh_base.set_weights(hh_base.person_weight)
@@ -135,9 +152,9 @@ def reform_stats(df):
 def get_dfs():
     p = mdf.concat([reform_p(i) for i in range(3)])
     h = mdf.concat([reform_hh(i) for i in range(3)])
-
-    # Process.
-    p["region_name"] = p.region.map(region_map)
+    # Error with duplicate indexes. See microdf#179.
+    p = p.reset_index(drop=True)
+    h = h.reset_index(drop=True)
 
     def chg(df, col):
         df[col + "_chg"] = df[col] - df[col + "_base"]
@@ -169,14 +186,17 @@ def get_dfs():
     # Per reform per decile (by household).
 
     decile = (
-        h.groupby(["reform", "decile"])
-        .sum()[
+        h[
             [
+                "reform",
+                "decile",
                 "household_net_income",
                 "household_net_income_base",
                 "people_in_household",
             ]
         ]
+        .groupby(["reform", "decile"])
+        .sum()
         .reset_index()
     )
     decile["chg"] = (
