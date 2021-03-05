@@ -36,8 +36,9 @@ ineq_base = h.groupby("reform").equiv_household_net_income_base.agg(INEQS)
 ineq_base.columns = [i + "_base" for i in ineq_base.columns]
 ineq_reform = h.groupby("reform").equiv_household_net_income.agg(INEQS)
 ineq_reform.columns = [i + "_reform" for i in ineq_reform.columns]
+budget_impact = group(h, ["reform"], compare_cols=["household_net_income"])
 p_agg = p.groupby("reform")[["household_net_income_pl", "winner"]].mean()
-r = p_agg.join(ineq_base).join(ineq_reform, on="reform")
+r = p_agg.join(ineq_base).join(ineq_reform, on="reform").join(budget_impact)
 r["reform"] = r.index  # Easier for plotting.
 for i in INEQS:
     r[i + "_pc"] = pct_chg(r[i + "_base"], r[i + "_reform"])
@@ -46,7 +47,7 @@ for i in INEQS:
 
 decile = (
     group(
-        h,
+        h[h.household_net_income_base > 0],
         ["reform", "decile"],
         ["people_in_household"],
         ["household_net_income"],
