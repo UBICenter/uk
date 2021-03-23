@@ -16,16 +16,16 @@ def pct_chg(base, new):
     return (new - base) / base
 
 
-def group(data, group_cols, agg_cols=[], compare_cols=None):
+def group(data, group_cols, agg_cols=[], compare_cols=None, mean=False):
     """ Workaround for current microdf groupby issue.
     """
     # Replicate agg cols for base and reform.
     all_compare_cols = compare_cols + [i + "_base" for i in compare_cols]
-    res = (
-        data[group_cols + agg_cols + all_compare_cols]
-        .groupby(group_cols)
-        .sum()
-    )
+    res_g = data[group_cols + agg_cols + all_compare_cols].groupby(group_cols)
+    if mean:
+        res = res_g.mean()
+    else:
+        res = res_g.sum()
     for i in compare_cols:
         res[i + "_pct_chg"] = pct_chg(res[i + "_base"], res[i])
     return res
@@ -33,6 +33,7 @@ def group(data, group_cols, agg_cols=[], compare_cols=None):
 
 # Reform level summary.
 INEQS = ["gini", "top_10_pct_share", "top_1_pct_share"]
+POVS = ["in_poverty_bhc", "in_deep_poverty_bhc"]
 ineq_base = h.groupby("reform").equiv_household_net_income_base.agg(INEQS)
 ineq_base.columns = [i + "_base" for i in ineq_base.columns]
 ineq_reform = h.groupby("reform").equiv_household_net_income.agg(INEQS)
@@ -42,8 +43,14 @@ budget_impact["household_net_income_chg"] = (
     budget_impact.household_net_income
     - budget_impact.household_net_income_base
 )
+pov = group(p, ["reform"], compare_cols=POVS, mean=True)
 p_agg = p.groupby("reform")[["household_net_income_pl", "winner"]].mean()
-r = p_agg.join(ineq_base).join(ineq_reform, on="reform").join(budget_impact)
+r = (
+    p_agg.join(ineq_base)
+    .join(ineq_reform, on="reform")
+    .join(budget_impact)
+    .join(pov)
+)
 r["reform"] = r.index  # Easier for plotting.
 for i in INEQS:
     r[i + "_pc"] = pct_chg(r[i + "_base"], r[i + "_reform"])
@@ -58,7 +65,7 @@ decile = (
     )
 ).reset_index()
 decile["chg"] = decile.household_net_income - decile.household_net_income_base
-decile["weekly_chg_pp"] = (decile.chg / decile.people_in_household) / 53
+decile["weekly_chg_pp"] = (decile.chg / decile.people_in_household) / 52
 
 
 G = ["reform", "region_name"]
@@ -72,7 +79,6 @@ region_r = region_pov.join(region_inc).reset_index()
 p["age_group"] = np.where(
     p.age < 18, "0 to 17", np.where(p.age < 65, "18 to 64", "65 and older")
 )
-POVS = ["in_poverty_bhc", "in_deep_poverty_bhc"]
 POV_COLS = [
     "in_poverty_bhc",
     "in_poverty_bhc_base",
@@ -81,18 +87,20 @@ POV_COLS = [
 ]
 GROUPS = ["reform", "age_group"]
 # Use group function.
-pov = (p[GROUPS + POV_COLS].groupby(GROUPS).mean() / 52).reset_index()
+pov_age = (p[GROUPS + POV_COLS].groupby(GROUPS).mean() / 52).reset_index()
 
-cur_pov = pov[pov.reform == "1: Foundational"][
+cur_pov = pov_age[pov_age.reform == "1: Foundational"][
     ["age_group", "in_poverty_bhc_base", "in_deep_poverty_bhc_base"]
 ]
 cur_pov_long = cur_pov.melt(id_vars="age_group")
 
-pov["pov_chg"] = pov.in_poverty_bhc / pov.in_poverty_bhc_base - 1
-pov["deep_pov_chg"] = (
-    pov.in_deep_poverty_bhc / pov.in_deep_poverty_bhc_base - 1
+pov_age["pov_chg"] = pov_age.in_poverty_bhc / pov_age.in_poverty_bhc_base - 1
+pov_age["deep_pov_chg"] = (
+    pov_age.in_deep_poverty_bhc / pov_age.in_deep_poverty_bhc_base - 1
 )
-pov_chg_long = pov.melt(["reform", "age_group"], ["pov_chg", "deep_pov_chg"])
+pov_chg_long = pov_age.melt(
+    ["reform", "age_group"], ["pov_chg", "deep_pov_chg"]
+)
 
 # Within-decile.
 BUCKETS = [
@@ -137,7 +145,6 @@ chg_bucket["order"] = chg_bucket.household_net_income_pc_group.map(
 chg_bucket.sort_values("order", ascending=False, inplace=True)
 
 # Poverty by demographic.
-
 
 
 # Export.

@@ -5,6 +5,7 @@ dependencies:
 - pandas
 - numpy
 - pip
+- geopandas
 - pip:
   - geojson_rewind
   - jupyter-book
