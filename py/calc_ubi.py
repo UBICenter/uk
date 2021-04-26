@@ -257,7 +257,7 @@ def set_ubi(
         budget (float): Total budget for UBI spending.
         senior (float): Pensioner UBI amount per week.
         child (float): Child UBI amount per week.
-        dis_base (float): Disabled (Equality Act+) supplement per week.
+        dis_base (float): Disabled supplement per week.
         regions (ndarray): Numpy float array of 12 UK regional supplements per
             week.
         verbose (bool, optional): Whether to print the calibrated adult UBI
