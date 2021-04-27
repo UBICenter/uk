@@ -47,7 +47,7 @@ def opt(reform):
         input_dict,
         "mean_pct_loss",
         reform,
-        verbose=False,
+        verbose=True,
         seed=0,
         # Reforms don't always improve upon one another with the
         # default tolerance of 0.01.

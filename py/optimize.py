@@ -10,7 +10,6 @@ def optimize(
     loss_metric: str,
     reform: str,
     verbose: bool = True,
-    path: str = None,
     **kwargs
 ) -> tuple:
     """Also accepts **kwargs passed to differential_evolution.
@@ -28,7 +27,6 @@ def optimize(
     :type verbose: bool, optional
     :param path: Path to FRS files, defaults to None in which case the files
         are loaded via frs.load().
-    :type path: str, optional
     :return: Tuple of OptimizeResult with the optimal solution and dict with
         solution for each UBI component.
         Also prints a dict with the optimal solution and loss metrics.
@@ -66,7 +64,7 @@ def optimize(
             bounds += [input_dict[i] for i in REGIONS[:-1]]
             bounds += ZERO  # Last geo is a baseline.
 
-    baseline_df, reform_base_df, budget = get_data(path=path)
+    baseline_df, reform_base_df, budget = get_data()
 
     # Take the average value of each tuple to create array of starting values
     x = [((i[0] + i[1]) / 2) for i in bounds]

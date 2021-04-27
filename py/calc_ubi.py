@@ -6,7 +6,7 @@ ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, np.zeros((12)),
                  verbose=True)
 """
 
-from openfisca_uk.tools.simulation import PopulationSim
+from openfisca_uk import Microsimulation, reported
 import frs
 import pandas as pd
 import numpy as np
@@ -14,7 +14,6 @@ from rdbl import gbp
 from openfisca_uk.tools.general import add
 from openfisca_core.model_api import *
 from openfisca_uk.entities import *
-from openfisca_uk.reforms.modelling import reported_benefits
 
 
 BASELINE_COLS = [
@@ -24,7 +23,6 @@ BASELINE_COLS = [
     "age_18_64",
     "is_disabled_for_ubi",
     "region",
-    "household_weight",
     "net_income",
     "people_in_household",
     "household_equivalisation_bhc",
@@ -54,6 +52,29 @@ CORE_BENEFITS = [
 ]
 
 
+class is_disabled_for_ubi(Variable):
+    value_type = float
+    entity = Person
+    label = (
+        "Whether person is classified as disabled for the purposes of UBI supplements"
+    )
+    definition_period = YEAR
+
+    def formula(person, period, parameters):
+        QUALIFYING_BENEFITS = [
+            "incapacity_benefit_reported",
+            "SDA_reported",
+            "AA_reported",
+            "DLA_M_reported",
+            "DLA_SC_reported",
+            "IIDB_reported",
+            # Given to a single person at benunit level
+            "PIP_DL_reported",
+            "PIP_M_reported",
+        ]
+        return add(person, period, QUALIFYING_BENEFITS, options=[MATCH]) > 0
+
+
 def ubi_reform(
     senior: float, adult: float, child: float, dis_base: float, geo: np.array,
 ):
@@ -78,7 +99,7 @@ def ubi_reform(
         definition_period = YEAR
 
         def formula(person, period, parameters):
-            return 0.5 * person("taxable_income", period)
+            return 0.5 * person("total_income", period)
 
     class basic_income(Variable):
         value_type = float
@@ -102,35 +123,30 @@ def ubi_reform(
     class gross_income(Variable):
         value_type = float
         entity = Person
-        label = "Gross income"
+        label = "Gross income, including benefits"
         definition_period = YEAR
 
         def formula(person, period, parameters):
             COMPONENTS = [
-                "basic_income",
-                "earnings",
-                "profit",
-                "state_pension",
+                "employment_income",
                 "pension_income",
-                "savings_interest",
-                "rental_income",
-                "SSP",
-                "SPP",
-                "SMP",
-                "holiday_pay",
+                "self_employment_income",
+                "property_income",
+                "savings_interest_income",
                 "dividend_income",
-                "total_benefits",
-                "benefits_modelling",
+                "miscellaneous_income",
+                "benefits",
+                "basic_income",
             ]
-            return add(person, period, COMPONENTS, options=[MATCH])
+            return add(person, period, COMPONENTS)
 
     class reform(Reform):
         def apply(self):
             for changed_var in [income_tax, gross_income]:
                 self.update_variable(changed_var)
-            for added_var in [basic_income]:
+            for added_var in [basic_income, is_disabled_for_ubi]:
                 self.add_variable(added_var)
-            for removed_var in CORE_BENEFITS + ["NI"]:
+            for removed_var in CORE_BENEFITS + ["national_insurance"]:
                 self.neutralize_variable(removed_var)
 
     return reform
@@ -154,7 +170,7 @@ REGIONS = np.array(
 )
 
 
-def get_data(path=None):
+def get_data():
     """Generate key datasets for UBI reforms.
 
     Returns:
@@ -162,30 +178,20 @@ def get_data(path=None):
         DataFrame: UBI tax reform DataFrame with core variables.
         float: Yearly revenue raised by the UBI tax reform.
     """
-    if path is not None:
-        person = pd.read_csv(path + "/person.csv")
-        benunit = pd.read_csv(path + "/benunit.csv")
-        household = pd.read_csv(path + "/household.csv")
-    else:
-        person, benunit, household = frs.load()
-    baseline = PopulationSim(
-        reported_benefits, frs_data=(person, benunit, household)
-    )
+    baseline = Microsimulation(reported)
     baseline_df = baseline.df(BASELINE_COLS, map_to="household")
-    FRS_DATA = (person, benunit, household)
-    reform_no_ubi = ubi_reform(0, 0, 0, 0, np.array([0] * 12))
-    reform_no_ubi_sim = PopulationSim(
-        reported_benefits, reform_no_ubi, frs_data=FRS_DATA
-    )
+    reform_no_ubi = ubi_reform(0, 0, 0, 0, pd.Series([0] * 12, index=REGIONS))
+    reform_no_ubi_sim = Microsimulation(reported, reform_no_ubi)
     reform_base_df = reform_no_ubi_sim.df(BASELINE_COLS, map_to="household")
-    budget = -np.sum(
-        baseline.calc("household_weight")
-        * (
-            reform_no_ubi_sim.calc("net_income", map_to="household")
-            - baseline.calc("net_income", map_to="household")
-        )
+    budget = (
+        baseline.calc("net_income", map_to="household").sum()
+        - reform_no_ubi_sim.calc("net_income", map_to="household").sum()
     )
-    return baseline_df, reform_base_df, budget
+    baseline_df_pd = pd.DataFrame(baseline_df)
+    baseline_df_pd["household_weight"] = baseline_df.weights
+    reform_base_df_pd = pd.DataFrame(reform_base_df)
+    reform_base_df_pd["household_weight"] = reform_base_df.weights
+    return baseline_df_pd, reform_base_df_pd, budget
 
 
 def get_adult_amount(
@@ -223,14 +229,12 @@ def get_adult_amount(
     ) * 52
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
-            np.where(REGIONS[base_df["region"]] == region_name, regions[i], 0)
-            * base_df["people_in_household"]
+            np.where(base_df.region == region_name, regions[i], 0)
+            * base_df.people_in_household
             * 52
         )
-    total_cost = np.sum(basic_income * base_df["household_weight"])
-    adult_amount = (budget - total_cost) / np.sum(
-        base_df["age_18_64"] * base_df["household_weight"]
-    )
+    total_cost = basic_income.sum()
+    adult_amount = (budget - total_cost) / base_df.age_18_64.sum()
     if verbose:
         print(f"Adult amount: {gbp(adult_amount / 52)}/week")
     if pass_income:
@@ -276,8 +280,8 @@ def set_ubi(
         pass_income=True,
         verbose=verbose,
     )
-    basic_income += base_df["age_18_64"] * adult_amount
-    reform_df = base_df.copy(deep=True)
+    basic_income += base_df.age_18_64 * adult_amount
+    reform_df = base_df.copy()
     reform_df["basic_income"] = basic_income
     reform_df["net_income"] += basic_income
     return reform_df
