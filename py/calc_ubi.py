@@ -6,7 +6,7 @@ ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, np.zeros((12)),
                  verbose=True)
 """
 
-from openfisca_uk import Microsimulation, reported
+from openfisca_uk import Microsimulation, reported, reported_benefits, reported_tax
 import frs
 import pandas as pd
 import numpy as np
