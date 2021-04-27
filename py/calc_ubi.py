@@ -24,7 +24,7 @@ BASELINE_COLS = [
     "is_disabled_for_ubi",
     "region",
     "net_income",
-    "people_in_household",
+    "people",
     "household_equivalisation_bhc",
 ]
 
@@ -111,13 +111,13 @@ def ubi_reform(
             def ubi_piece(value, flag):
                 return value * person(flag, period.this_year)
 
-            region = person.household("region", period)
+            region = person.household("region", period).decode_to_str()
             return (
                 ubi_piece(senior, "age_over_64")
                 + ubi_piece(adult, "age_18_64")
                 + ubi_piece(child, "age_under_18")
                 + ubi_piece(dis_base, "is_disabled_for_ubi")
-                + geo[person.household("region").astype(int)]
+                + geo[region]
             )
 
     class gross_income(Variable):
@@ -138,7 +138,7 @@ def ubi_reform(
                 "benefits",
                 "basic_income",
             ]
-            return add(person, period, COMPONENTS)
+            return add(person, period, COMPONENTS, options=[MATCH])
 
     class reform(Reform):
         def apply(self):
@@ -178,10 +178,10 @@ def get_data():
         DataFrame: UBI tax reform DataFrame with core variables.
         float: Yearly revenue raised by the UBI tax reform.
     """
-    baseline = Microsimulation(reported)
-    baseline_df = baseline.df(BASELINE_COLS, map_to="household")
+    baseline = Microsimulation()
+    baseline_df = baseline.df([var for var in BASELINE_COLS if var != "is_disabled_for_ubi"], map_to="household")
     reform_no_ubi = ubi_reform(0, 0, 0, 0, pd.Series([0] * 12, index=REGIONS))
-    reform_no_ubi_sim = Microsimulation(reported, reform_no_ubi)
+    reform_no_ubi_sim = Microsimulation(reform_no_ubi)
     reform_base_df = reform_no_ubi_sim.df(BASELINE_COLS, map_to="household")
     budget = (
         baseline.calc("net_income", map_to="household").sum()
