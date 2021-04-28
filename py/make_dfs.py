@@ -4,7 +4,15 @@ import openfisca_uk as o
 import pandas as pd
 from openfisca_uk import IndividualSim, PopulationSim
 from openfisca_uk.reforms.modelling import reported_benefits
+
+import os
+
+if "py" not in os.listdir("."):
+    os.chdir("..")
+
+
 from calc_ubi import ubi_reform
+
 
 REGION_CODES = [
     "NORTH_EAST",
@@ -39,7 +47,7 @@ REGION_NAMES = [
 region_code_map = dict(zip(range(len(REGION_CODES)), REGION_CODES))
 region_name_map = dict(zip(range(len(REGION_NAMES)), REGION_NAMES))
 
-optimal_params = pd.read_csv("../optimal_params.csv").round()  # Up a folder.
+optimal_params = pd.read_csv("optimal_params.csv").round()  # Up a folder.
 
 
 def reform(i):
@@ -55,8 +63,8 @@ def reform(i):
 
 reforms = [reform(i) for i in range(3)]
 
-baseline_sim = PopulationSim(reported_benefits)
-reform_sims = [PopulationSim(reported_benefits, reform) for reform in reforms]
+baseline_sim = PopulationSim()
+reform_sims = [PopulationSim(reform) for reform in reforms]
 
 REFORM_NAMES = ["1: Foundational", "2: Disability", "3: Disability + geo"]
 
@@ -64,7 +72,6 @@ BASELINE_PERSON_COLS = [
     "household_weight",
     "age",
     "region",
-    "is_disabled_for_ubi",
 ]
 
 # Extract these for baseline too.
@@ -85,9 +92,7 @@ REFORM_HH_COLS = [
 ]
 
 p_base = mdf.MicroDataFrame(
-    baseline_sim.df(
-        BASELINE_PERSON_COLS + REFORM_PERSON_COLS, map_to="person"
-    ),
+    baseline_sim.df(BASELINE_PERSON_COLS + REFORM_PERSON_COLS, map_to="person"),
     weights="household_weight",
 )
 p_base.rename(
@@ -105,9 +110,7 @@ hh_base.rename(
     axis=1,
     inplace=True,
 )
-hh_base["person_weight"] = (
-    hh_base.household_weight * hh_base.people
-)
+hh_base["person_weight"] = hh_base.household_weight * hh_base.people
 
 # Add region code and names
 hh_base["region_code"] = hh_base.region.map(region_code_map)
@@ -117,9 +120,7 @@ p_base["region_name"] = p_base.region.map(region_name_map)
 
 # Change weight column to represent people for decile groups.
 hh_base.set_weights(hh_base.person_weight)
-hh_base["decile"] = np.ceil(
-    hh_base.equiv_household_net_income_base.rank(pct=True) * 10
-)
+hh_base["decile"] = np.ceil(hh_base.equiv_household_net_income_base.rank(pct=True) * 10)
 # Set decile for households with nonpositive income to zero.
 # These will be excluded from graphs.
 hh_base.decile = np.where(
@@ -159,9 +160,7 @@ def get_dfs():
         df[col + "_chg"] = df[col] - df[col + "_base"]
         # Percentage change, only defined for positive baselines.
         df[col + "_pc"] = np.where(
-            df[col + "_base"] > 0,
-            df[col + "_chg"] / df[col + "_base"],
-            np.nan,
+            df[col + "_base"] > 0, df[col + "_chg"] / df[col + "_base"], np.nan,
         )
         # Percentage loss. NB: np.minimum(np.nan, 0) -> np.nan.
         df[col + "_pl"] = np.minimum(0, df[col + "_pc"])

@@ -3,8 +3,8 @@ import pandas as pd
 import os
 
 # Scripts must be run from root directory.
-# if "py" not in os.listdir("."):
-# os.chdir("..")
+if "py" not in os.listdir("."):
+    os.chdir("..")
 
 from make_dfs import get_dfs
 
