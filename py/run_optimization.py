@@ -74,4 +74,4 @@ ubi_params["mean_pct_loss"] = [
     reform_3[0].fun,
 ]
 # Export to top-level folder.
-ubi_params.to_csv("../optimal_params.csv", index=False)
+ubi_params.to_csv("optimal_params.csv", index=False)
