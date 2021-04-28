@@ -233,8 +233,10 @@ def get_adult_amount(
             * base_df.people
             * 52
         )
-    total_cost = basic_income.sum()
-    adult_amount = (budget - total_cost) / base_df.age_18_64.sum()
+    total_cost = (basic_income * base_df.household_weight).sum()
+    num_adults = (base_df.age_18_64 * base_df.household_weight).sum()
+    adult_ubi_budget = budget - total_cost
+    adult_amount = adult_ubi_budget / num_adults
     if verbose:
         print(f"Adult amount: {gbp(adult_amount / 52)}/week")
     if pass_income:
