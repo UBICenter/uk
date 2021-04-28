@@ -14,10 +14,7 @@ def extract(x: list) -> tuple:
 
 
 def loss_metrics(
-    x: list,
-    baseline_df: pd.DataFrame,
-    reform_base_df: pd.DataFrame,
-    budget: int,
+    x: list, baseline_df: pd.DataFrame, reform_base_df: pd.DataFrame, budget: int,
 ) -> pd.Series:
     """Calculate each potential loss metric.
 
@@ -38,13 +35,11 @@ def loss_metrics(
     :rtype: pd.Series
     """
     senior, child, dis_base, regions = extract(x)
-    reform_df = set_ubi(
-        reform_base_df, budget, senior, child, dis_base, regions,
-    )
+    reform_df = set_ubi(reform_base_df, budget, senior, child, dis_base, regions,)
     # Calculate loss-related loss metrics.
     change = reform_df.net_income - baseline_df.net_income
     loss = np.maximum(-change, 0)
-    weight = baseline_df.household_weight * baseline_df.people_in_household
+    weight = baseline_df.household_weight * baseline_df.people
     # Calculate loser share.
     total_pop = np.sum(weight)
     losers = np.sum(weight * (loss > 0))
@@ -60,17 +55,13 @@ def loss_metrics(
     mean_pct_loss = total_pct_loss / total_pop
     # Calculate average percent loss with double weight for PWD.
     pwd2_weight = baseline_df.household_weight * (
-        baseline_df.is_disabled_for_ubi + baseline_df.people_in_household
+        baseline_df.is_disabled_for_ubi + baseline_df.people
     )
-    total_pct_loss_pwd2 = np.sum(
-        pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss]
-    )
+    total_pct_loss_pwd2 = np.sum(pwd2_weight[valid_pct_loss] * pct_loss[valid_pct_loss])
     total_pop_pwd2 = pwd2_weight.sum()  # Denominator.
     mean_pct_loss_pwd2 = total_pct_loss_pwd2 / total_pop_pwd2
     # Gini of income per person.
-    reform_hh_net_income_pp = (
-        reform_df.net_income / baseline_df.people_in_household
-    )
+    reform_hh_net_income_pp = reform_df.net_income / baseline_df.people
     # mdf.gini requires a dataframe.
     reform_df = pd.DataFrame(
         {"reform_hh_net_income_pp": reform_hh_net_income_pp, "weight": weight}

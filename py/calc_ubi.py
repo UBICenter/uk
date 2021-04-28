@@ -6,7 +6,7 @@ ubi_df = set_ubi(base_reform_df, budget, 0, 0, 0, np.zeros((12)),
                  verbose=True)
 """
 
-from openfisca_uk import Microsimulation, reported, reported_benefits, reported_tax
+from openfisca_uk import Microsimulation
 import frs
 import pandas as pd
 import numpy as np
@@ -230,7 +230,7 @@ def get_adult_amount(
     for i, region_name in zip(range(len(regions)), REGIONS):
         basic_income += (
             np.where(base_df.region == region_name, regions[i], 0)
-            * base_df.people_in_household
+            * base_df.people
             * 52
         )
     total_cost = basic_income.sum()

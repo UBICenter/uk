@@ -40,32 +40,21 @@ ineq_reform = h.groupby("reform").equiv_household_net_income.agg(INEQS)
 ineq_reform.columns = [i + "_reform" for i in ineq_reform.columns]
 budget_impact = group(h, ["reform"], compare_cols=["household_net_income"])
 budget_impact["household_net_income_chg"] = (
-    budget_impact.household_net_income
-    - budget_impact.household_net_income_base
+    budget_impact.household_net_income - budget_impact.household_net_income_base
 )
 pov = group(p, ["reform"], compare_cols=POVS, mean=True)
 p_agg = p.groupby("reform")[["household_net_income_pl", "winner"]].mean()
-r = (
-    p_agg.join(ineq_base)
-    .join(ineq_reform, on="reform")
-    .join(budget_impact)
-    .join(pov)
-)
+r = p_agg.join(ineq_base).join(ineq_reform, on="reform").join(budget_impact).join(pov)
 r["reform"] = r.index  # Easier for plotting.
 for i in INEQS:
     r[i + "_pc"] = pct_chg(r[i + "_base"], r[i + "_reform"])
 
 # Per reform per decile (by household).
 decile = (
-    group(
-        h,
-        ["reform", "decile"],
-        ["people_in_household"],
-        ["household_net_income"],
-    )
+    group(h, ["reform", "decile"], ["people"], ["household_net_income"],)
 ).reset_index()
 decile["chg"] = decile.household_net_income - decile.household_net_income_base
-decile["weekly_chg_pp"] = (decile.chg / decile.people_in_household) / 52
+decile["weekly_chg_pp"] = (decile.chg / decile.people) / 52
 
 
 G = ["reform", "region_name"]
@@ -98,9 +87,7 @@ pov_age["pov_chg"] = pov_age.in_poverty_bhc / pov_age.in_poverty_bhc_base - 1
 pov_age["deep_pov_chg"] = (
     pov_age.in_deep_poverty_bhc / pov_age.in_deep_poverty_bhc_base - 1
 )
-pov_chg_long = pov_age.melt(
-    ["reform", "age_group"], ["pov_chg", "deep_pov_chg"]
-)
+pov_chg_long = pov_age.melt(["reform", "age_group"], ["pov_chg", "deep_pov_chg"])
 
 # Within-decile.
 BUCKETS = [
@@ -110,33 +97,27 @@ BUCKETS = [
     "Gain more than 5%",
 ]
 h["household_net_income_pc_group"] = pd.cut(
-    h.household_net_income_pc,
-    [-np.inf, -0.05, 0, 0.05, np.inf],
-    labels=BUCKETS,
+    h.household_net_income_pc, [-np.inf, -0.05, 0, 0.05, np.inf], labels=BUCKETS,
 )
 
 
-def group(groupby, name="people_in_household"):
+def group(groupby, name="people"):
     return (
         h[h.household_net_income_base > 0]
         .groupby(groupby)
-        .people_in_household.sum()
+        .people.sum()
         .reset_index()
         .rename({0: name}, axis=1)
     )
 
 
 chg_bucket = group(["reform", "decile", "household_net_income_pc_group"])
-chg_bucket_decile_total = group(
-    ["reform", "decile"], "total_people_in_household"
-)
+chg_bucket_decile_total = group(["reform", "decile"], "total_people")
 chg_bucket_total = group(["reform", "household_net_income_pc_group"])
 reform_total = group("reform")
 # Calculate share of decile.
 chg_bucket = chg_bucket.merge(chg_bucket_decile_total, on=["reform", "decile"])
-chg_bucket["share_of_decile"] = (
-    chg_bucket.people_in_household / chg_bucket.total_people_in_household
-)
+chg_bucket["share_of_decile"] = chg_bucket.people / chg_bucket.total_people
 
 # Sort for correct stack order.
 chg_bucket["order"] = chg_bucket.household_net_income_pc_group.map(

@@ -74,7 +74,7 @@ REFORM_PERSON_COLS = [
     "in_deep_poverty_bhc",
 ]
 
-BASELINE_HH_COLS = ["household_weight", "people_in_household", "region"]
+BASELINE_HH_COLS = ["household_weight", "people", "region"]
 
 # Extract these for baseline too.
 REFORM_HH_COLS = [
@@ -106,7 +106,7 @@ hh_base.rename(
     inplace=True,
 )
 hh_base["person_weight"] = (
-    hh_base.household_weight * hh_base.people_in_household
+    hh_base.household_weight * hh_base.people
 )
 
 # Add region code and names
