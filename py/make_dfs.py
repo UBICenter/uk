@@ -2,9 +2,7 @@ import microdf as mdf
 import numpy as np
 import openfisca_uk as o
 import pandas as pd
-from openfisca_uk import IndividualSim, PopulationSim
-from openfisca_uk.reforms.modelling import reported_benefits
-
+from openfisca_uk import Microsimulation
 import os
 
 if "py" not in os.listdir("."):
@@ -63,8 +61,8 @@ def reform(i):
 
 reforms = [reform(i) for i in range(3)]
 
-baseline_sim = PopulationSim()
-reform_sims = [PopulationSim(reform) for reform in reforms]
+baseline_sim = Microsimulation()
+reform_sims = [Microsimulation(reform) for reform in reforms]
 
 REFORM_NAMES = ["1: Foundational", "2: Disability", "3: Disability + geo"]
 
@@ -134,6 +132,9 @@ hh_base.set_weights(hh_base.household_weight)
 
 
 def reform_p(i):
+    regions = reform_sims[i].calc("region")
+    country = reform_sims[i].calc("country")
+    accom = reform_sims[i].calc("accommodation_type")
     p = reform_sims[i].df(REFORM_PERSON_COLS, map_to="person")
     p["reform"] = REFORM_NAMES[i]
     return mdf.concat([p_base, p], axis=1)
