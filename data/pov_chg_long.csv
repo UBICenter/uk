@@ -1,19 +1,19 @@
 reform,age_group,variable,value
-1: Foundational,0 to 17,pov_chg,-0.322848766199231
-1: Foundational,18 to 64,pov_chg,-0.3372174076078229
-1: Foundational,65 and older,pov_chg,-0.4291345539621547
-2: Disability,0 to 17,pov_chg,-0.40569521106390816
-2: Disability,18 to 64,pov_chg,-0.4084997925544208
-2: Disability,65 and older,pov_chg,-0.410877250024518
-3: Disability + geo,0 to 17,pov_chg,-0.400288945064167
-3: Disability + geo,18 to 64,pov_chg,-0.40676783080608625
-3: Disability + geo,65 and older,pov_chg,-0.3964345952230962
-1: Foundational,0 to 17,deep_pov_chg,-0.9677873980814784
-1: Foundational,18 to 64,deep_pov_chg,-0.8830688074451176
-1: Foundational,65 and older,deep_pov_chg,-0.8202593500707946
-2: Disability,0 to 17,deep_pov_chg,-0.9624823832434272
-2: Disability,18 to 64,deep_pov_chg,-0.8134205616088088
-2: Disability,65 and older,deep_pov_chg,-0.911667875355412
-3: Disability + geo,0 to 17,deep_pov_chg,-0.9643761355851428
-3: Disability + geo,18 to 64,deep_pov_chg,-0.8254608279007625
-3: Disability + geo,65 and older,deep_pov_chg,-0.904107815036088
+1: Foundational,0 to 17,pov_chg,-0.32063209090484
+1: Foundational,18 to 64,pov_chg,-0.2925481955362327
+1: Foundational,65 and older,pov_chg,-0.4059577708092209
+2: Disability,0 to 17,pov_chg,-0.36518922213528004
+2: Disability,18 to 64,pov_chg,-0.4035917194880325
+2: Disability,65 and older,pov_chg,-0.34182102228036826
+3: Disability + geo,0 to 17,pov_chg,-0.35752139063399724
+3: Disability + geo,18 to 64,pov_chg,-0.4023099201186474
+3: Disability + geo,65 and older,pov_chg,-0.34323632201570253
+1: Foundational,0 to 17,deep_pov_chg,-0.8784759122945422
+1: Foundational,18 to 64,deep_pov_chg,-0.8611330955976444
+1: Foundational,65 and older,deep_pov_chg,-0.7670638807787045
+2: Disability,0 to 17,deep_pov_chg,-0.8784759122945422
+2: Disability,18 to 64,deep_pov_chg,-0.8578331483604121
+2: Disability,65 and older,deep_pov_chg,-0.7947388943309018
+3: Disability + geo,0 to 17,deep_pov_chg,-0.8784759122945422
+3: Disability + geo,18 to 64,deep_pov_chg,-0.8558408990290438
+3: Disability + geo,65 and older,deep_pov_chg,-0.7947388943309018
