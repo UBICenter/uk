@@ -1,7 +1,7 @@
 age_group,variable,value
-0 to 17,in_poverty_bhc_base,0.004286157933421323
-18 to 64,in_poverty_bhc_base,0.0024035100460654667
-65 and older,in_poverty_bhc_base,0.0033131735225623233
-0 to 17,in_deep_poverty_bhc_base,0.0006448806960831562
-18 to 64,in_deep_poverty_bhc_base,0.0006343964325489619
-65 and older,in_deep_poverty_bhc_base,0.00017179711146886206
+0 to 17,in_poverty_bhc_base,0.22288021253790882
+18 to 64,in_poverty_bhc_base,0.12498252239540428
+65 and older,in_poverty_bhc_base,0.17228502317324082
+0 to 17,in_deep_poverty_bhc_base,0.03353379619632412
+18 to 64,in_deep_poverty_bhc_base,0.03298861449254602
+65 and older,in_deep_poverty_bhc_base,0.008933449796380827
