@@ -82,7 +82,7 @@ POV_COLS = [
 ]
 GROUPS = ["reform", "age_group"]
 # Use group function.
-pov_age = (p[GROUPS + POV_COLS].groupby(GROUPS).mean()).reset_index()
+pov_age = p[GROUPS + POV_COLS].groupby(GROUPS).mean().reset_index()
 
 cur_pov = pov_age[pov_age.reform == "1: Foundational"][
     ["age_group", "in_poverty_bhc_base", "in_deep_poverty_bhc_base"]
@@ -94,7 +94,7 @@ pov_age["deep_pov_chg"] = (
     pov_age.in_deep_poverty_bhc / pov_age.in_deep_poverty_bhc_base - 1
 )
 pov_chg_long = pov_age.melt(
-    ["reform", "age_group"], ["pov_chg", "deep_pov_chg"]
+    ["reform", "age_group"], ["pov_chg", "deep_pov_chg"],
 )
 
 # Within-decile.
