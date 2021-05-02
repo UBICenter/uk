@@ -1,13 +1,13 @@
 reform,age_group,variable,value
-1: Foundational,0 to 17,pov_chg,-0.32063209090484
-1: Foundational,18 to 64,pov_chg,-0.2925481955362328
+1: Foundational,0 to 17,pov_chg,-0.3131683184897467
+1: Foundational,18 to 64,pov_chg,-0.2807138242012249
 1: Foundational,65 and older,pov_chg,-0.405957770809221
-2: Disability,0 to 17,pov_chg,-0.36518922213528016
-2: Disability,18 to 64,pov_chg,-0.40359171948803263
+2: Disability,0 to 17,pov_chg,-0.362519426693763
+2: Disability,18 to 64,pov_chg,-0.3972298816056494
 2: Disability,65 and older,pov_chg,-0.34182102228036837
-3: Disability + geo,0 to 17,pov_chg,-0.35752139063399724
-3: Disability + geo,18 to 64,pov_chg,-0.4023099201186474
-3: Disability + geo,65 and older,pov_chg,-0.3432363220157024
+3: Disability + geo,0 to 17,pov_chg,-0.352875446202383
+3: Disability + geo,18 to 64,pov_chg,-0.3981738816541842
+3: Disability + geo,65 and older,pov_chg,-0.34461808851688913
 1: Foundational,0 to 17,deep_pov_chg,-0.8784759122945422
 1: Foundational,18 to 64,deep_pov_chg,-0.8611330955976444
 1: Foundational,65 and older,deep_pov_chg,-0.7670638807787046
