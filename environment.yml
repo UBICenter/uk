@@ -9,7 +9,8 @@ dependencies:
 - pip:
   - geojson_rewind
   - jupyter-book
-  - "git+https://github.com/PSLmodels/microdf.git"
+  - "git+https://github.com/PSLmodels/microdf"
   - sphinxcontrib-bibtex==1.0.0
   - "git+https://github.com/nikhilwoodruff/openfisca-core"
   - "git+https://github.com/PSLmodels/openfisca-uk"
+  - rdbl==0.1.2
